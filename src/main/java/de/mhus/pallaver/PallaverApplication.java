@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.concurrent.ScheduledExecutorService;
 
 @EnableScheduling
-@SpringBootApplication(scanBasePackages = {"de.mhus.kt2l"})
+@SpringBootApplication
 @Slf4j
 @Push(PushMode.AUTOMATIC)
 public class PallaverApplication implements AppShellConfigurator {

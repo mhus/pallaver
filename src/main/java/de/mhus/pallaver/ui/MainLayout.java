@@ -57,6 +57,8 @@ public class MainLayout extends AppLayout {
 
         nav.addItem(new SideNavItem("Models", ModelsView.class,
                 VaadinIcon.BUILDING.create()));
+        nav.addItem(new SideNavItem("Chat", ChatView.class,
+                VaadinIcon.CHAT.create()));
 
         return nav;
     }

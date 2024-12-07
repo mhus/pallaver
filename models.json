@@ -1,0 +1,17 @@
+[ {
+  "title" : "phi3",
+  "type" : "ollama:phi3:latest",
+  "temperature" : 0.2
+}, {
+  "title" : "llama3.2",
+  "type" : "ollama:llama3.2:latest",
+  "temperature" : 0.2
+}, {
+  "title" : "mistral",
+  "type" : "ollama:mistral:latest",
+  "temperature" : 0.2
+}, {
+  "title" : "gemma2",
+  "type" : "ollama:gemma2:latest",
+  "temperature" : 0.2
+} ]
