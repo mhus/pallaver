@@ -3,6 +3,7 @@ package de.mhus.pallaver.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.mhus.pallaver.ui.LLTypeFactory;
+import dev.langchain4j.model.chat.ChatLanguageModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -60,5 +61,13 @@ public class ModelService {
         }
     }
 
+    public ChatLanguageModel createChatModel(LLModel model) {
+        var type = getModelType(model);
+        return type.createChatModel(model);
+    }
 
+    private LLType getModelType(LLModel model) {
+        return getModelTypes().stream().filter(type -> type.getName().equals(model.getType()))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Unknown type: " + model.getType()));
+    }
 }

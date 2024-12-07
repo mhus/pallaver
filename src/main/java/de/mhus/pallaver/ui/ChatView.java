@@ -15,6 +15,9 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.service.UserMessage;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -27,6 +30,7 @@ public class ChatView extends VerticalLayout {
     private TextArea chatHistory;
     private TextArea chatInput;
     private Span infoText;
+    private ChatLanguageModel chatModel;
 
     @PostConstruct
     public void init() {
@@ -54,11 +58,36 @@ public class ChatView extends VerticalLayout {
 
         add(menuBar, infoText, splitLayout, new Text("Press Control+Enter to submit"));
         setSizeFull();
+
+        try {
+            actionChangeModel(modelService.getModels().iterator().next());
+        } catch (Exception e) {
+            infoText.setText("No model found");
+        }
     }
 
     private void actionSendMessage() {
-        addChatMessage("You", chatInput.getValue());
+        var userMessage = chatInput.getValue();
+        addChatMessage("You", userMessage);
         chatInput.setValue("");
+        chatInput.setReadOnly(true);
+        var ui = UI.getCurrent();
+        Thread.startVirtualThread(() -> {
+            try {
+                var response = chatModel.generate(userMessage);
+                ui.access(() -> {
+                    addChatMessage("Other", response);
+                    chatInput.setReadOnly(false);
+                });
+            } catch (Exception e) {
+                ui.access(() -> {
+                    addChatMessage("Error", e.getMessage());
+                    chatInput.setReadOnly(false);
+                });
+                return;
+            }
+        });
+
     }
 
     private void addChatMessage(String person, String value) {
@@ -80,7 +109,7 @@ public class ChatView extends VerticalLayout {
 
     private void actionChangeModel(LLModel model) {
         infoText.setText("Model: " + model.getTitle());
-
+        chatModel = modelService.createChatModel(model);
     }
 
 }
