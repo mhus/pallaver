@@ -92,6 +92,12 @@
         </dependency>
 
         <dependency>
+            <groupId>de.mhus.lib</groupId>
+            <artifactId>mhus-commons</artifactId>
+            <version>8.1.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
             <version>${langchain4j.version}</version>
