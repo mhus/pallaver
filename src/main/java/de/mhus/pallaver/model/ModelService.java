@@ -3,6 +3,7 @@ package de.mhus.pallaver.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.mhus.pallaver.ui.LLTypeFactory;
+import de.mhus.pallaver.ui.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
@@ -63,11 +64,6 @@ public class ModelService {
         }
     }
 
-    public ChatLanguageModel createChatModel(LLModel model) {
-        var type = getModelType(model);
-        return type.createChatModel(model);
-    }
-
     private LLType getModelType(LLModel model) {
         return getModelTypes().stream().filter(type -> type.getName().equals(model.getType()))
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Unknown type: " + model.getType()));
@@ -78,8 +74,8 @@ public class ModelService {
         return type.createTekenizer(model);
     }
 
-    public StreamingChatLanguageModel createStreamingChatModel(LLModel model) {
+    public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
         var type = getModelType(model);
-        return type.createStreamingChatModel(model);
+        return type.createStreamingChatModel(model, options);
     }
 }

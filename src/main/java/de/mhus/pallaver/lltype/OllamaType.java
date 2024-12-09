@@ -1,17 +1,19 @@
 package de.mhus.pallaver.lltype;
 
 
+import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.LLType;
+import de.mhus.pallaver.ui.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.embedding.onnx.BertTokenizer;
 import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
-import dev.langchain4j.model.openai.OpenAiTokenizer;
 import lombok.Getter;
+
+import java.time.Duration;
 
 public class OllamaType implements LLType {
     @Getter
@@ -40,19 +42,18 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(LLModel model) {
-        return OllamaChatModel.builder()
-                .baseUrl(url)
-                .modelName(modelName)
-                .temperature(model.getTemperature()).build();
-    }
-
-    @Override
-    public StreamingChatLanguageModel createStreamingChatModel(LLModel model) {
-        return OllamaStreamingChatModel.builder()
-                .baseUrl(url)
-                .modelName(modelName)
-                .temperature(model.getTemperature()).build();
+    public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
+        var builder = OllamaStreamingChatModel.builder();
+        builder.baseUrl(url);
+        builder.modelName(modelName);
+        builder.temperature(options.getTemperature());
+        if (MString.isSet(options.getFormat()))
+            builder.format(options.getFormat());
+        if (options.getSeed() != null)
+            builder.seed(options.getSeed());
+        if (options.getTimeoutInSeconds() != null)
+            builder.timeout(Duration.ofSeconds(options.getTimeoutInSeconds()));
+        return builder.build();
     }
 
     @Override

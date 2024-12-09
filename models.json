@@ -1,17 +1,45 @@
 [ {
-  "title" : "phi3",
-  "type" : "ollama:phi3:latest",
-  "temperature" : 0.2
+  "title" : "Ollama codellama:latest",
+  "type" : "ollama:codellama:latest",
+  "default" : false
 }, {
-  "title" : "llama3.2",
-  "type" : "ollama:llama3.2:latest",
-  "temperature" : 0.2
-}, {
-  "title" : "mistral",
-  "type" : "ollama:mistral:latest",
-  "temperature" : 0.2
-}, {
-  "title" : "gemma2",
+  "title" : "Ollama gemma2:latest",
   "type" : "ollama:gemma2:latest",
-  "temperature" : 0.2
+  "default" : true
+}, {
+  "title" : "Ollama llama-pro:latest",
+  "type" : "ollama:llama-pro:latest",
+  "default" : false
+}, {
+  "title" : "Ollama llama2-uncensored:latest",
+  "type" : "ollama:llama2-uncensored:latest",
+  "default" : false
+}, {
+  "title" : "Ollama llama2:latest",
+  "type" : "ollama:llama2:latest",
+  "default" : false
+}, {
+  "title" : "Ollama llama3.1:latest",
+  "type" : "ollama:llama3.1:latest",
+  "default" : false
+}, {
+  "title" : "Ollama llama3.2:latest",
+  "type" : "ollama:llama3.2:latest",
+  "default" : true
+}, {
+  "title" : "Ollama mistral:latest",
+  "type" : "ollama:mistral:latest",
+  "default" : true
+}, {
+  "title" : "Ollama phi3:latest",
+  "type" : "ollama:phi3:latest",
+  "default" : false
+}, {
+  "title" : "Ollama starcoder2:latest",
+  "type" : "ollama:starcoder2:latest",
+  "default" : false
+}, {
+  "title" : "Ollama yi:latest",
+  "type" : "ollama:yi:latest",
+  "default" : false
 } ]

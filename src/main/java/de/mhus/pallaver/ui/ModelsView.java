@@ -1,5 +1,6 @@
 package de.mhus.pallaver.ui;
 
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -38,8 +39,8 @@ public class ModelsView extends VerticalLayout {
     private ListBox<LLModel> modelListBox;
     private TextField modelTitle;
     private ComboBox<LLType> modelType;
-    private NumberField modelTemperature;
     private LLModel modelItem;
+    private Checkbox modelIsDefault;
 
     @PostConstruct
     public void init() {
@@ -61,8 +62,28 @@ public class ModelsView extends VerticalLayout {
         menuBar.addItem(VaadinIcon.PLUS.create(), e -> actionCreateModel());
         menuBar.addItem(VaadinIcon.TRASH.create(), e -> actionRemoveModel());
         menuBar.addItem(VaadinIcon.SAFE.create(), e -> actionSaveModel());
+        menuBar.addItem(VaadinIcon.GLOBE.create(), e -> actionGenerateAll());
+        menuBar.addItem(VaadinIcon.REFRESH.create(), e -> actionLoad());
 
         return menuBar;
+    }
+
+    private void actionLoad() {
+        modelListDataProviderList.clear();
+        modelListDataProviderList.addAll(modelService.getModels());
+        modelListDataProvider.refreshAll();
+    }
+
+    private void actionGenerateAll() {
+        modelService.getModelTypes().forEach(t -> {
+            if (modelListDataProviderList.stream().filter(m -> m.getType().equals(t.getName())).findFirst().isEmpty()) {
+                var newItem = new LLModel();
+                newItem.setType(t.getName());
+                newItem.setTitle(t.getTitle());
+                modelListDataProviderList.add(newItem);
+            }
+        });
+        modelListDataProvider.refreshAll();
     }
 
     private void actionSaveModel() {
@@ -81,7 +102,6 @@ public class ModelsView extends VerticalLayout {
         var newItem = new LLModel();
         newItem.setType(!typeList.isEmpty() ? "" : typeList.getFirst().getName());
         newItem.setTitle("+++ New Model");
-        newItem.setTemperature(0.2);
         modelListDataProviderList.add(newItem);
         modelListDataProvider.refreshAll();
         modelListBox.setValue(newItem);
@@ -94,15 +114,15 @@ public class ModelsView extends VerticalLayout {
             modelTitle.setEnabled(false);
             modelType.clear();
             modelType.setEnabled(false);
-            modelTemperature.clear();
-            modelTemperature.setEnabled(false);
+            modelIsDefault.setValue(false);
+            modelIsDefault.setEnabled(false);
         } else {
             modelTitle.setValue(item.getTitle());
             modelTitle.setEnabled(true);
             modelType.setValue(typeList.stream().filter(i -> i.getName().equals(item.getType())).findFirst().orElseGet(() -> new UnknownType(item.getType()) ) );
             modelType.setEnabled(true);
-            modelTemperature.setValue(item.getTemperature());
-            modelTemperature.setEnabled(true);
+            modelIsDefault.setValue(item.isDefault());
+            modelIsDefault.setEnabled(true);
         }
     }
 
@@ -148,15 +168,14 @@ public class ModelsView extends VerticalLayout {
                 modelItem.setType(e.getValue().getName());
             }
         });
-        modelTemperature = new NumberField("Temperature");
-        modelTemperature.setEnabled(false);
-        modelTemperature.addValueChangeListener(e -> {
+        modelIsDefault = new Checkbox("Is Default");
+        modelIsDefault.addValueChangeListener(e -> {
             if (modelItem != null) {
-                modelItem.setTemperature(e.getValue());
+                modelItem.setDefault(e.getValue());
             }
         });
 
-        formLayout.add(modelTitle, modelType, modelTemperature);
+        formLayout.add(modelTitle, modelType, modelIsDefault);
         formLayout.setSizeFull();
         formLayout.addClassNames(LumoUtility.Padding.Horizontal.MEDIUM);
         return formLayout;
