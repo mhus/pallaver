@@ -3,8 +3,14 @@ package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.LLType;
+import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.embedding.onnx.BertTokenizer;
+import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer;
 import dev.langchain4j.model.ollama.OllamaChatModel;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiTokenizer;
 import lombok.Getter;
 
 public class OllamaType implements LLType {
@@ -40,4 +46,18 @@ public class OllamaType implements LLType {
                 .modelName(modelName)
                 .temperature(model.getTemperature()).build();
     }
+
+    @Override
+    public StreamingChatLanguageModel createStreamingChatModel(LLModel model) {
+        return OllamaStreamingChatModel.builder()
+                .baseUrl(url)
+                .modelName(modelName)
+                .temperature(model.getTemperature()).build();
+    }
+
+    @Override
+    public Tokenizer createTekenizer(LLModel model) {
+        return new HuggingFaceTokenizer();
+    }
+
 }

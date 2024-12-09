@@ -2,6 +2,7 @@ package de.mhus.pallaver.ui;
 
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
+import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
 import com.vaadin.flow.component.html.Hr;
@@ -14,6 +15,7 @@ import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
+@CssImport("./styles/custom.css")
 public class MainLayout extends AppLayout {
 
     private H2 viewTitle;

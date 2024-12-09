@@ -92,6 +92,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>0.24.0</version>
+        </dependency>
+
+        <dependency>
             <groupId>de.mhus.lib</groupId>
             <artifactId>mhus-commons</artifactId>
             <version>8.1.0</version>

@@ -1,6 +1,8 @@
 package de.mhus.pallaver.model;
 
+import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 
 public interface LLType {
@@ -14,4 +16,8 @@ public interface LLType {
     }
 
     ChatLanguageModel createChatModel(LLModel model);
+
+    Tokenizer createTekenizer(LLModel model);
+
+    StreamingChatLanguageModel createStreamingChatModel(LLModel model);
 }
