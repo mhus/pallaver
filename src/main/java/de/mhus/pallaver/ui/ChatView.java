@@ -5,6 +5,7 @@ import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
@@ -21,6 +22,7 @@ import com.vaadin.flow.router.Route;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import dev.langchain4j.code.judge0.Judge0JavaScriptExecutionTool;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -28,10 +30,13 @@ import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.StreamingResponseHandler;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.output.Response;
+import dev.langchain4j.service.AiServices;
+import dev.langchain4j.service.TokenStream;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +46,9 @@ import java.util.concurrent.CompletableFuture;
 @Route(value = "chat", layout = MainLayout.class)
 @PageTitle("Chat")
 public class ChatView extends VerticalLayout {
+
+    @Value("${judge0.apiKey:}")
+    private String judge0ApiKey;
 
     @Autowired
     private ModelService modelService;
@@ -177,6 +185,16 @@ public class ChatView extends VerticalLayout {
         tSeed.addValueChangeListener(e -> options.getModelOptions().setSeed(e.getValue().intValue()));
         formLayout.add(tSeed);
 
+        var tFormat = new TextArea("Format");
+        tFormat.setValue(options.getModelOptions().getFormat());
+        tFormat.addValueChangeListener(e -> options.getModelOptions().setFormat(e.getValue()));
+        formLayout.add(tFormat);
+
+        var checkboxUseTools = new Checkbox("Use Tools");
+        checkboxUseTools.setValue(options.isUseTools());
+        checkboxUseTools.addValueChangeListener(e -> options.setUseTools(e.getValue()));
+        formLayout.add(checkboxUseTools);
+
         formLayout.setSizeFull();
         return formLayout;
     }
@@ -202,6 +220,7 @@ public class ChatView extends VerticalLayout {
         private StreamingChatLanguageModel chatModel;
         private TokenWindowChatMemory chatMemory;
         private ChatOptions options = new ChatOptions();
+        private Assistant chatAssistant;
 
         public ModelItem(LLModel model, MenuItem item) {
             this.model = model;
@@ -228,6 +247,15 @@ public class ChatView extends VerticalLayout {
                         chatMemory =  TokenWindowChatMemory.withMaxTokens(options.getMaxTokens(), modelService.createTokenizer(model));
                         if (MString.isSet(chatOptions.getPrompt()))
                             chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
+
+                        Judge0JavaScriptExecutionTool judge0Tool = new MyJudge0JavaScriptExecutionTool(judge0ApiKey);
+
+                        chatAssistant = AiServices.builder(Assistant.class)
+                                .streamingChatLanguageModel(chatModel)
+                                .chatMemory(chatMemory)
+                                .tools(judge0Tool)
+                                .build();
+
                     }
 
                     chatMemory.add(UserMessage.userMessage(userMessage));
@@ -259,9 +287,16 @@ public class ChatView extends VerticalLayout {
                         }
                     };
 
-                    chatModel.generate(chatMemory.messages(), handler);
+                    if (chatOptions.isUseTools()) {
+                        TokenStream tokenStream = chatAssistant.generate(chatMemory.messages());
+                        tokenStream.onNext(handler::onNext);
+                        tokenStream.onComplete(handler::onComplete);
+                        tokenStream.onError(handler::onError);
+                        tokenStream.start();
+                    } else {
+                        chatModel.generate(chatMemory.messages(), handler);
+                    }
                     chatMemory.add(futureAiMessage.get());
-
                 } catch (Exception e) {
                     LOGGER.error("Error", e);
                     ui.access(() -> {
@@ -276,6 +311,7 @@ public class ChatView extends VerticalLayout {
                 chatMemory.clear();
             chatModel = null;
             chatMemory = null;
+            chatAssistant = null;
             this.options = options;
             if (MString.isSet(chatOptions.getPrompt()))
                 chatHistory.addBubble("Prompt", true, ChatPanel.COLOR.YELLOW).setText(chatOptions.getPrompt());

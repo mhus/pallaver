@@ -13,4 +13,5 @@ public class ChatOptions {
     private ModelOptions modelOptions = new ModelOptions();
     private int maxTokens = 1000;
     private String prompt = "";
+    private boolean useTools = false;
 }
