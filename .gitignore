@@ -48,3 +48,7 @@ target
 **/vite.generated.ts
 /log
 /src/main/resources/application-default.properties
+/package.json
+/tsconfig.json
+/types.d.ts
+/vite.config.ts

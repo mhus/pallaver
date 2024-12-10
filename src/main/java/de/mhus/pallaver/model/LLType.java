@@ -15,7 +15,11 @@ public interface LLType {
         return getName().equals(type.getName());
     }
 
-    Tokenizer createTekenizer(LLModel model);
+    Tokenizer createTokenizer(LLModel model);
 
     StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options);
+
+    boolean supports(LLModel model, String feature);
+
+    ChatLanguageModel createChatModel(LLModel model, ModelOptions options);
 }

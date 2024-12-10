@@ -19,28 +19,17 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import dev.langchain4j.code.judge0.Judge0JavaScriptExecutionTool;
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.SystemMessage;
-import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.chat.TokenWindowChatMemory;
-import dev.langchain4j.model.StreamingResponseHandler;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.output.Response;
-import dev.langchain4j.service.AiServices;
-import dev.langchain4j.service.TokenStream;
 import jakarta.annotation.PostConstruct;
-import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Route(value = "chat", layout = MainLayout.class)
@@ -55,7 +44,7 @@ public class ChatView extends VerticalLayout {
     private ChatPanel chatHistory;
     private TextArea chatInput;
     private Span infoText;
-    private List<ModelItem> models = new ArrayList<>();
+    private List<MyModelItem> models = new ArrayList<>();
     private ChatOptions chatOptions = new ChatOptions();
 
     @PostConstruct
@@ -102,7 +91,10 @@ public class ChatView extends VerticalLayout {
         chatInput.setValue("");
         chatInput.setReadOnly(true);
         ColorRotator colorRotator = new ColorRotator(ChatPanel.COLOR.GREEN, ChatPanel.COLOR.RED, ChatPanel.COLOR.YELLOW);
-        models.stream().filter(ModelItem::isEnabled).forEach(m -> m.answer(userMessage, colorRotator.next()));
+        models.stream().filter(ModelItem::isEnabled).forEach(m -> {
+            m.setColor(colorRotator.next());
+            m.answer(userMessage);
+        });
         UI ui = UI.getCurrent();
         Thread.startVirtualThread(() -> {
             try {
@@ -126,7 +118,7 @@ public class ChatView extends VerticalLayout {
             var item = menuModel.addItem(model.getTitle());
             item.setCheckable(true);
             item.setChecked(false);
-            models.add(new ModelItem(model, item));
+            models.add(new MyModelItem(model, item));
         });
         menuBar.addItem("Options", e -> actionShowOptions());
         return menuBar;
@@ -212,113 +204,46 @@ public class ChatView extends VerticalLayout {
         infoText.setText("Models: " + text);
     }
 
-    private class ModelItem {
-        LLModel model;
+    private class MyModelItem extends ModelItem {
+        private final UI ui;
         MenuItem item;
-        @Getter
-        volatile boolean enabled = false;
-        private StreamingChatLanguageModel chatModel;
-        private TokenWindowChatMemory chatMemory;
-        private ChatOptions options = new ChatOptions();
-        private Assistant chatAssistant;
+        @Setter
+        private ChatPanel.COLOR color = ChatPanel.COLOR.GREEN;
 
-        public ModelItem(LLModel model, MenuItem item) {
-            this.model = model;
+        public MyModelItem(LLModel model, MenuItem item) {
+            super(model, modelService, chatOptions);
             this.item = item;
+            this.ui = UI.getCurrent();
             item.addClickListener(e -> {
                 enabled = item.isChecked();
                 updateModelText();
             });
         }
 
-        public String getTitle() {
-            return model.getTitle();
-        }
-
-        public void answer(String userMessage, ChatPanel.COLOR color) {
-            final var ui = UI.getCurrent();
-
-            var otherBubble = addChatBubble(model.getTitle(), false, color);
-
-            Thread.startVirtualThread(() -> {
-                try {
-                    if (chatModel == null) {
-                        chatModel = modelService.createStreamingChatModel(model, options.getModelOptions());
-                        chatMemory =  TokenWindowChatMemory.withMaxTokens(options.getMaxTokens(), modelService.createTokenizer(model));
-                        if (MString.isSet(chatOptions.getPrompt()))
-                            chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
-
-                        Judge0JavaScriptExecutionTool judge0Tool = new MyJudge0JavaScriptExecutionTool(judge0ApiKey);
-
-                        chatAssistant = AiServices.builder(Assistant.class)
-                                .streamingChatLanguageModel(chatModel)
-                                .chatMemory(chatMemory)
-                                .tools(judge0Tool)
-                                .build();
-
-                    }
-
-                    chatMemory.add(UserMessage.userMessage(userMessage));
-                    CompletableFuture<AiMessage> futureAiMessage = new CompletableFuture<>();
-                    StreamingResponseHandler<AiMessage> handler = new StreamingResponseHandler<AiMessage>() {
-
-                        @Override
-                        public void onNext(String token) {
-                            ui.access(() -> {
-                                otherBubble.appendText(token);
-                            });
-                        }
-
-                        @Override
-                        public void onComplete(Response<AiMessage> response) {
-                            futureAiMessage.complete(response.content());
-                            ui.access(() -> {
-                                chatHistory.scrollToEnd();
-                            });
-                        }
-
-                        @Override
-                        public void onError(Throwable e) {
-                            LOGGER.error("Error", e);
-                            ui.access(() -> {
-                                otherBubble.appendText("Error: " + e.getMessage());
-                                chatHistory.scrollToEnd();
-                            });
-                        }
-                    };
-
-                    if (chatOptions.isUseTools()) {
-                        TokenStream tokenStream = chatAssistant.generate(chatMemory.messages());
-                        tokenStream.onNext(handler::onNext);
-                        tokenStream.onComplete(handler::onComplete);
-                        tokenStream.onError(handler::onError);
-                        tokenStream.start();
-                    } else {
-                        chatModel.generate(chatMemory.messages(), handler);
-                    }
-                    chatMemory.add(futureAiMessage.get());
-                } catch (Exception e) {
-                    LOGGER.error("Error", e);
+        @Override
+        protected Bubble addChatBubble(String title) {
+            var bubble = new ChatBubble(title, false, color) {
+                public void appendText(String text) {
                     ui.access(() -> {
-                        otherBubble.appendText("Error: " + e.getMessage());
+                        super.appendText(text);
                     });
                 }
-            });
+                @Override
+                public void onComplete() {
+                    ui.access(() -> {
+                        chatHistory.scrollToEnd();
+                    });
+                }
+            };
+            chatHistory.addBubble(bubble);
+            return bubble;
         }
 
-        public void reset(ChatOptions options) {
-            if (chatMemory != null)
-                chatMemory.clear();
-            chatModel = null;
-            chatMemory = null;
-            chatAssistant = null;
-            this.options = options;
-            if (MString.isSet(chatOptions.getPrompt()))
-                chatHistory.addBubble("Prompt", true, ChatPanel.COLOR.YELLOW).setText(chatOptions.getPrompt());
-        }
-
-        public boolean isDefault() {
-            return model.isDefault();
+        @Override
+        protected List<Object> createTools() {
+            Judge0JavaScriptExecutionTool judge0Tool = new Judge0JavaScriptExecutionTool(judge0ApiKey);
+            Calculator calculatorTool = new Calculator();
+            return List.of(judge0Tool, calculatorTool);
         }
     }
 }

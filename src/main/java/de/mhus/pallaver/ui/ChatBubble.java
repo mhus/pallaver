@@ -7,7 +7,7 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
-public class ChatBubble extends Div {
+public class ChatBubble extends Div implements ModelItem.Bubble {
     private final ChatPanel.COLOR color;
     private final Div titleDiv;
     private final Div textDiv;
@@ -54,10 +54,13 @@ public class ChatBubble extends Div {
 //                + "</p>";
     }
 
-    public ChatBubble appendText(String text) {
+    public void appendText(String text) {
         this.text += text;
         textHtml.setHtmlContent(toHtml(this.text));
-        return this;
+    }
+
+    @Override
+    public void onComplete() {
     }
 
 }

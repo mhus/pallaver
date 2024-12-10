@@ -21,6 +21,11 @@ public class ChatPanel extends Scroller {
 
     public ChatBubble addBubble(String personName, boolean left, COLOR color) {
         ChatBubble bubble = new ChatBubble(personName, left, color);
+        addBubble(bubble);
+        return bubble;
+    }
+
+    public ChatBubble addBubble(ChatBubble bubble) {
         content.add(bubble);
         return bubble;
     }

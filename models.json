@@ -5,7 +5,7 @@
 }, {
   "title" : "Ollama gemma2:latest",
   "type" : "ollama:gemma2:latest",
-  "default" : true
+  "default" : false
 }, {
   "title" : "Ollama llama-pro:latest",
   "type" : "ollama:llama-pro:latest",
@@ -29,7 +29,7 @@
 }, {
   "title" : "Ollama mistral:latest",
   "type" : "ollama:mistral:latest",
-  "default" : true
+  "default" : false
 }, {
   "title" : "Ollama phi3:latest",
   "type" : "ollama:phi3:latest",

@@ -5,8 +5,6 @@ import com.vaadin.flow.component.applayout.DrawerToggle;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Header;
-import com.vaadin.flow.component.html.Hr;
-import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.sidenav.SideNav;
@@ -60,6 +58,8 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Models", ModelsView.class,
                 VaadinIcon.BUILDING.create()));
         nav.addItem(new SideNavItem("Chat", ChatView.class,
+                VaadinIcon.CHAT.create()));
+        nav.addItem(new SideNavItem("Generator", GeneratorView.class,
                 VaadinIcon.CHAT.create()));
 
         return nav;

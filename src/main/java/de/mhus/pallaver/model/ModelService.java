@@ -71,11 +71,21 @@ public class ModelService {
 
     public Tokenizer createTokenizer(LLModel model) {
         var type = getModelType(model);
-        return type.createTekenizer(model);
+        return type.createTokenizer(model);
     }
 
     public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
         var type = getModelType(model);
         return type.createStreamingChatModel(model, options);
+    }
+
+    public boolean supports(LLModel model, String feature) {
+        var type = getModelType(model);
+        return type.supports(model, feature);
+    }
+
+    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
+        var type = getModelType(model);
+        return type.createChatModel(model, options);
     }
 }

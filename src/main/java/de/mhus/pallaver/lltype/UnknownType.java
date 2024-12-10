@@ -30,12 +30,22 @@ public class UnknownType implements LLType {
     }
 
     @Override
-    public Tokenizer createTekenizer(LLModel model) {
+    public Tokenizer createTokenizer(LLModel model) {
         throw new RuntimeException("Unknown type");
     }
 
     @Override
     public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
+        throw new RuntimeException("Unknown type");
+    }
+
+    @Override
+    public boolean supports(LLModel model, String feature) {
+        return false;
+    }
+
+    @Override
+    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
         throw new RuntimeException("Unknown type");
     }
 

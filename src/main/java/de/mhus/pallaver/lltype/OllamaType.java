@@ -4,6 +4,7 @@ package de.mhus.pallaver.lltype;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.LLType;
+import de.mhus.pallaver.ui.LLM;
 import de.mhus.pallaver.ui.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -14,6 +15,7 @@ import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import lombok.Getter;
 
 import java.time.Duration;
+import java.util.List;
 
 public class OllamaType implements LLType {
     @Getter
@@ -23,6 +25,7 @@ public class OllamaType implements LLType {
     @Getter
     private final String title;
     private final String modelName;
+    private final List<String> supportedFeatures = List.of(LLM.STREAM, LLM.TOOLS);
 
     public OllamaType(String modelName, String url) {
         this.modelName = modelName;
@@ -57,7 +60,27 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public Tokenizer createTekenizer(LLModel model) {
+    public boolean supports(LLModel model, String feature) {
+        return supportedFeatures.contains(feature);
+    }
+
+    @Override
+    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
+        var builder = OllamaChatModel.builder();
+        builder.baseUrl(url);
+        builder.modelName(modelName);
+        builder.temperature(options.getTemperature());
+        if (MString.isSet(options.getFormat()))
+            builder.format(options.getFormat());
+        if (options.getSeed() != null)
+            builder.seed(options.getSeed());
+        if (options.getTimeoutInSeconds() != null)
+            builder.timeout(Duration.ofSeconds(options.getTimeoutInSeconds()));
+        return builder.build();
+    }
+
+    @Override
+    public Tokenizer createTokenizer(LLModel model) {
         return new HuggingFaceTokenizer();
     }
 
