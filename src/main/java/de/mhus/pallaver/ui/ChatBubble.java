@@ -7,7 +7,7 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
-public class ChatBubble extends Div implements ModelItem.Bubble {
+public class ChatBubble extends Div implements Bubble {
     private final ChatPanel.COLOR color;
     private final Div titleDiv;
     private final Div textDiv;

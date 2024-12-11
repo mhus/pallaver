@@ -5,6 +5,7 @@ public class ColorRotator {
     private ChatPanel.COLOR[] colors;
 
     public ColorRotator(ChatPanel.COLOR ... colors) {
+        if (colors == null || colors.length == 0) colors = new ChatPanel.COLOR[] { ChatPanel.COLOR.GREEN, ChatPanel.COLOR.RED, ChatPanel.COLOR.YELLOW };
         this.colors = colors;
     }
 

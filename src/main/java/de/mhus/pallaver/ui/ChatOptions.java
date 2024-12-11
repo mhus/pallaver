@@ -10,8 +10,16 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder(toBuilder=true)
 public class ChatOptions {
+    public enum MODE {
+        AUTO,
+        CHAT,
+        STREAM
+    }
     private ModelOptions modelOptions = new ModelOptions();
     private int maxTokens = 1000;
+    private int maxMessages = 30;
     private String prompt = "";
     private boolean useTools = false;
+    private MODE mode = MODE.AUTO;
+
 }

@@ -77,7 +77,7 @@ public class ChatView extends VerticalLayout {
         add(menuBar, infoText, splitLayout, sendBtn);
         setSizeFull();
 
-        models.stream().filter(ModelItem::isDefault).forEach(m -> {
+        models.stream().filter(ModelControl::isDefault).forEach(m -> {
             m.item.setChecked(true);
             m.enabled = true;
         });
@@ -90,10 +90,10 @@ public class ChatView extends VerticalLayout {
         chatHistory.scrollToEnd();
         chatInput.setValue("");
         chatInput.setReadOnly(true);
-        ColorRotator colorRotator = new ColorRotator(ChatPanel.COLOR.GREEN, ChatPanel.COLOR.RED, ChatPanel.COLOR.YELLOW);
-        models.stream().filter(ModelItem::isEnabled).forEach(m -> {
+        ColorRotator colorRotator = new ColorRotator();
+        models.stream().filter(ModelControl::isEnabled).forEach(m -> {
             m.setColor(colorRotator.next());
-            m.answer(userMessage);
+            Thread.startVirtualThread(() -> m.answer(userMessage));
         });
         UI ui = UI.getCurrent();
         Thread.startVirtualThread(() -> {
@@ -200,11 +200,11 @@ public class ChatView extends VerticalLayout {
 
     private void updateModelText() {
         final StringBuffer text = new StringBuffer();
-        models.stream().filter(ModelItem::isEnabled).forEach(m -> text.append(m.getTitle()).append(" "));
+        models.stream().filter(ModelControl::isEnabled).forEach(m -> text.append(m.getTitle()).append(" "));
         infoText.setText("Models: " + text);
     }
 
-    private class MyModelItem extends ModelItem {
+    private class MyModelItem extends ModelControl {
         private final UI ui;
         MenuItem item;
         @Setter
@@ -235,7 +235,7 @@ public class ChatView extends VerticalLayout {
                     });
                 }
             };
-            chatHistory.addBubble(bubble);
+            ui.access(() -> chatHistory.addBubble(bubble));
             return bubble;
         }
 
