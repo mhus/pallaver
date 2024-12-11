@@ -61,6 +61,8 @@ public class MainLayout extends AppLayout {
                 VaadinIcon.CHAT.create()));
         nav.addItem(new SideNavItem("Generator", GeneratorView.class,
                 VaadinIcon.CHAT.create()));
+        nav.addItem(new SideNavItem("Quality Checks", QualityChecksView.class,
+                VaadinIcon.CHAT.create()));
 
         return nav;
     }
