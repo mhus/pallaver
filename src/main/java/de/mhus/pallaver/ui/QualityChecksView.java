@@ -109,7 +109,7 @@ public class QualityChecksView extends VerticalLayout {
 
     private void actionRun(ChatBubble resultBubble, UI ui, Check c) {
         ColorRotator colorRotator = new ColorRotator();
-        List<CompletableFuture<Boolean>> completed = new ArrayList<>();
+        List<CompletableFuture<QualityCheckMonitor>> completed = new ArrayList<>();
         models.stream().filter(MyModelItem::isEnabled).forEach(m -> {
             completed.add(actionRun(ui, c, m, colorRotator.next()));
         });
@@ -117,26 +117,25 @@ public class QualityChecksView extends VerticalLayout {
             ui.access(() -> {
                 LOGGER.info("Completed {}", c.name());
                 resultBubble.setText(
-                    completed.stream().map(f -> f.getNow(false) + " ").reduce("", String::concat)
+                    completed.stream().map(f -> f.getNow(null) + " ").reduce("", String::concat)
                 );
                 chatHistory.scrollToEnd();
             });
         });
     }
 
-    private CompletableFuture<Boolean> actionRun(UI ui, Check c, MyModelItem m, ChatPanel.COLOR color) {
+    private CompletableFuture<QualityCheckMonitor> actionRun(UI ui, Check c, MyModelItem m, ChatPanel.COLOR color) {
         var monitor = new BubbleMonitor(ui, m.getTitle() ,color);
         ui.access(() -> chatHistory.addBubble(monitor));
-        var future = new CompletableFuture<Boolean>();
+        var future = new CompletableFuture<QualityCheckMonitor>();
         Thread.startVirtualThread(() -> {
             try {
                 c.check().run(m.getModel(), monitor);
-
             } catch (Exception e) {
                 LOGGER.error("Error", e);
-                monitor.reportError(e);
+                monitor.forTest("").reportError(e);
             }
-            future.complete(monitor.isSuccess());
+            future.complete(monitor);
         });
         return future;
     }

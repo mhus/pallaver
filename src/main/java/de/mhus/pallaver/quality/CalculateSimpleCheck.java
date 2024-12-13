@@ -2,6 +2,7 @@ package de.mhus.pallaver.quality;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.tools.JavaScriptTool;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.ui.ChatOptions;
 import de.mhus.pallaver.ui.ModelControl;
@@ -28,29 +29,67 @@ public class CalculateSimpleCheck implements QualityCheck {
     @Override
     public void run(LLModel model, QualityCheckMonitor monitor) throws Exception {
 
-        var control = new ModelControl(model, modelService, ChatOptions
-                .builder()
-                .mode(ChatOptions.MODE.CHAT)
-                .maxMessages(10)
-                .maxTokens(1000)
-                .useTools(false)
-                .modelOptions(new ModelOptions())
-                .build()) {
-            @Override
-            protected Bubble addChatBubble(String title) {
-                return monitor;
-            }
+        testSimple(model, monitor.forTest("simple"));
+        testWithTool(model, monitor.forTest("withTool"));
 
-            @Override
-            protected List<Object> createTools() {
-                return List.of();
-            }
-        };
+    }
 
-        var answer = control.answer("Answer with one single Number. What is 18*9+2*55?").get();
+    private void testWithTool(LLModel model, QualityCheckMonitor.QualityCheckTestMonitor monitor) {
+        try {
+            var control = new ModelControl(model, modelService, ChatOptions
+                    .builder()
+                    .mode(ChatOptions.MODE.CHAT)
+                    .maxMessages(10)
+                    .maxTokens(1000)
+                    .useTools(true)
+                    .modelOptions(new ModelOptions())
+                    .build()) {
+                @Override
+                protected Bubble addChatBubble(String title) {
+                    return monitor.getBubble();
+                }
 
-        var text = answer.text();
+                @Override
+                protected List<Object> createTools() {
+                    JavaScriptTool jsTool = new JavaScriptTool();
+                    return List.of(jsTool);
+                }
+            };
 
-        monitor.setResult(text.trim().equals("272"));
+            var answer = control.answer("Answer with one single Number. What is the result of the term '18*9+2*55'?").get();
+
+            var text = answer.text();
+
+            monitor.setResult(text.trim().contains(" 272 ") || text.trim().contains(" 272.") || text.trim().equals("272"));
+        } catch (Exception e) {
+            monitor.reportError(e);
+        }
+    }
+
+    private void testSimple(LLModel model, QualityCheckMonitor.QualityCheckTestMonitor monitor) {
+        try {
+            var control = new ModelControl(model, modelService, ChatOptions
+                    .builder()
+                    .mode(ChatOptions.MODE.CHAT)
+                    .maxMessages(10)
+                    .maxTokens(1000)
+                    .useTools(false)
+                    .modelOptions(new ModelOptions())
+                    .build()) {
+                @Override
+                protected Bubble addChatBubble(String title) {
+                    return monitor.getBubble();
+                }
+
+            };
+
+            var answer = control.answer("Answer with one single Number. What is the result of the term '18*9+2*55'?").get();
+
+            var text = answer.text();
+
+            monitor.setResult(text.trim().contains(" 272 ") || text.trim().contains(" 272.") || text.trim().equals("272"));
+        } catch (Exception e) {
+            monitor.reportError(e);
+        }
     }
 }

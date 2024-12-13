@@ -10,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Slf4j
 @Service
 public class SimpleGenerator implements  Generator {
@@ -35,17 +33,21 @@ public class SimpleGenerator implements  Generator {
               return monitor.createResultBubble(title);
           }
 
-          @Override
-          protected List<Object> createTools() {
-              return List.of();
-          }
       };
 
-      var question = "Schreibe einen Text über das Thema 'Energie'";
-      monitor.createQuestionBubble("Question").appendText(question);
-      var result = control.answer(question);
-      var msg = result.getNow(null);
-      LOGGER.info("Result: " + msg);
+      var concept = ask(control, monitor,
+              "Schreibe ein Konzept für eine mittelalterliche, mystische Geschichte mit Elfen, Zauberern, Zwergen und Menschen.");
+      var structure = ask(control, monitor,
+              "Welche Kapitel sollte das Buch haben?");
 
+
+    }
+
+    private String ask(ModelControl control, GeneratorMonitor monitor, String question) {
+        monitor.createQuestionBubble("Question").appendText(question);
+        var result = control.answer(question);
+        var msg = result.getNow(null);
+        LOGGER.info("Result: " + msg);
+        return msg.text();
     }
 }

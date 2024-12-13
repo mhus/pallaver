@@ -1,10 +1,10 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.tools;
 
 import dev.langchain4j.agent.tool.Tool;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Calculator {
+public class SimpleCalculator {
 
     @Tool("Calculates the length of a string")
     int stringLength(String s) {

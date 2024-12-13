@@ -19,14 +19,15 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import de.mhus.pallaver.chat.BubbleFactory;
+import de.mhus.pallaver.chat.ChatModelControlFactory;
+import de.mhus.pallaver.chat.SimpleChatAssistantFactory;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
-import dev.langchain4j.code.judge0.Judge0JavaScriptExecutionTool;
 import jakarta.annotation.PostConstruct;
-import lombok.Setter;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,19 +37,22 @@ import java.util.List;
 @PageTitle("Chat")
 public class ChatView extends VerticalLayout {
 
-    @Value("${judge0.apiKey:}")
-    private String judge0ApiKey;
-
     @Autowired
     private ModelService modelService;
     private ChatPanel chatHistory;
     private TextArea chatInput;
     private Span infoText;
-    private List<MyModelItem> models = new ArrayList<>();
+    private List<ModelItem> models = new ArrayList<>();
     private ChatOptions chatOptions = new ChatOptions();
+    @Autowired
+    private List<ChatModelControlFactory> controlFactories;
+    @Autowired
+    private SimpleChatAssistantFactory simpleChatAssistantFactory;
+    private ChatModelControlFactory modelControlFactory;
 
     @PostConstruct
     public void init() {
+        modelControlFactory = simpleChatAssistantFactory;
         var menuBar = createMenuBar();
         infoText = new Span("");
         chatHistory = new ChatPanel();
@@ -64,7 +68,6 @@ public class ChatView extends VerticalLayout {
                     }
                 });
 
-
         var splitLayout = new SplitLayout(chatHistory, chatInput);
         splitLayout.setSizeFull();
         splitLayout.setOrientation(SplitLayout.Orientation.VERTICAL);
@@ -77,7 +80,7 @@ public class ChatView extends VerticalLayout {
         add(menuBar, infoText, splitLayout, sendBtn);
         setSizeFull();
 
-        models.stream().filter(ModelControl::isDefault).forEach(m -> {
+        models.stream().filter(ModelItem::isDefault).forEach(m -> {
             m.item.setChecked(true);
             m.enabled = true;
         });
@@ -91,11 +94,10 @@ public class ChatView extends VerticalLayout {
         chatInput.setValue("");
         chatInput.setReadOnly(true);
         ColorRotator colorRotator = new ColorRotator();
-        models.stream().filter(ModelControl::isEnabled).forEach(m -> {
-            m.setColor(colorRotator.next());
-            Thread.startVirtualThread(() -> m.answer(userMessage));
-        });
         UI ui = UI.getCurrent();
+        models.stream().filter(ModelItem::isEnabled).forEach(m -> {
+            Thread.startVirtualThread(() -> m.answer(userMessage, colorRotator.next(), ui));
+        });
         Thread.startVirtualThread(() -> {
             try {
                 Thread.sleep(1000);
@@ -118,9 +120,25 @@ public class ChatView extends VerticalLayout {
             var item = menuModel.addItem(model.getTitle());
             item.setCheckable(true);
             item.setChecked(false);
-            models.add(new MyModelItem(model, item));
+            models.add(new ModelItem(model, item));
         });
         menuBar.addItem("Options", e -> actionShowOptions());
+
+        var menuControl = menuBar.addItem("Control").getSubMenu();
+        controlFactories.forEach(factory -> {
+            var item = menuControl.addItem(factory.getTitle());
+            item.setCheckable(true);
+            item.setChecked(factory == simpleChatAssistantFactory);
+            item.addClickListener(e -> {
+                modelControlFactory = factory;
+                menuControl.getItems().forEach(i -> i.setChecked( i == e.getSource() ));
+                updateModelText();
+                actionReset();
+                chatInput.setValue(modelControlFactory.getDefaultPrompt());
+            });
+        });
+
+
         return menuBar;
     }
 
@@ -192,7 +210,7 @@ public class ChatView extends VerticalLayout {
     }
 
     private void actionReset() {
-        models.forEach(model -> model.reset(chatOptions));
+        models.forEach(model -> model.reset());
         updateModelText();
         chatHistory.clear();
         chatInput.setValue("");
@@ -200,34 +218,69 @@ public class ChatView extends VerticalLayout {
 
     private void updateModelText() {
         final StringBuffer text = new StringBuffer();
-        models.stream().filter(ModelControl::isEnabled).forEach(m -> text.append(m.getTitle()).append(" "));
-        infoText.setText("Models: " + text);
+        models.stream().filter(ModelItem::isEnabled).forEach(m -> text.append(m.getTitle()).append(" "));
+        infoText.setText("Control: " + modelControlFactory.getTitle() + ", Models: " + text);
     }
 
-    private class MyModelItem extends ModelControl {
-        private final UI ui;
+    @Getter
+    private class ModelItem {
         MenuItem item;
-        @Setter
-        private ChatPanel.COLOR color = ChatPanel.COLOR.GREEN;
+        LLModel model;
+        boolean enabled;
 
-        public MyModelItem(LLModel model, MenuItem item) {
-            super(model, modelService, chatOptions);
+        private ModelControl control;
+
+        public ModelItem(LLModel model, MenuItem item) {
+            this.model = model;
             this.item = item;
-            this.ui = UI.getCurrent();
             item.addClickListener(e -> {
                 enabled = item.isChecked();
                 updateModelText();
             });
         }
 
+        public boolean isDefault() {
+            return model.isDefault();
+        }
+
+        public void reset() {
+            if (control != null)
+                control.reset(null);
+            control = null;
+        }
+
+        public String getTitle() {
+            return model.getTitle();
+        }
+
+        public void answer(String userMessage, ChatPanel.COLOR color, UI ui) {
+            if (control == null) {
+                control = modelControlFactory.createModelControl(model, chatOptions, new ChatViewBubbleFactory(color, ui));
+            }
+            control.answer(userMessage);
+        }
+
+    }
+
+    private class ChatViewBubbleFactory implements BubbleFactory {
+
+        private final ChatPanel.COLOR color;
+        private final UI ui;
+
+        ChatViewBubbleFactory(ChatPanel.COLOR color, UI ui) {
+            this.color = color;
+            this.ui = ui;
+        }
+
         @Override
-        protected Bubble addChatBubble(String title) {
+        public Bubble createBubble(String title) {
             var bubble = new ChatBubble(title, false, color) {
                 public void appendText(String text) {
                     ui.access(() -> {
                         super.appendText(text);
                     });
                 }
+
                 @Override
                 public void onComplete() {
                     ui.access(() -> {
@@ -237,13 +290,6 @@ public class ChatView extends VerticalLayout {
             };
             ui.access(() -> chatHistory.addBubble(bubble));
             return bubble;
-        }
-
-        @Override
-        protected List<Object> createTools() {
-            Judge0JavaScriptExecutionTool judge0Tool = new Judge0JavaScriptExecutionTool(judge0ApiKey);
-            Calculator calculatorTool = new Calculator();
-            return List.of(judge0Tool, calculatorTool);
         }
     }
 }

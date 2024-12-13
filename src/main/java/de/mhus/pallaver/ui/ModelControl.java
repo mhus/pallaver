@@ -1,6 +1,5 @@
 package de.mhus.pallaver.ui;
 
-import com.vaadin.flow.component.contextmenu.MenuItem;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
@@ -25,15 +24,19 @@ import java.util.concurrent.CompletableFuture;
 @Slf4j
 public abstract class ModelControl {
 
+    @Getter
     LLModel model;
     private final ModelService modelService;
-    MenuItem item;
     @Getter
     volatile boolean enabled = false;
+    @Getter
     private StreamingChatLanguageModel streamChatModel;
+    @Getter
     private ChatLanguageModel chatModel;
+    @Getter
     private TokenWindowChatMemory chatMemory;
     @Setter
+    @Getter
     private ChatOptions chatOptions = new ChatOptions();
     private StreamChatAssistant streamChatAssistant;
     private ChatAssistant chatAssistant;
@@ -54,40 +57,7 @@ public abstract class ModelControl {
 
         try {
 
-            chatMemory = TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), modelService.createTokenizer(model));
-            if (MString.isSet(chatOptions.getPrompt()))
-                chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
-
-            boolean modeStream = chatOptions.getMode() == ChatOptions.MODE.STREAM // force streaming by config
-                    ||
-                    modelService.supports(model, LLM.STREAM) // if stream is supported and not tools
-                    &&
-                    (!chatOptions.isUseTools() || modelService.supports(model, LLM.STREAM_TOOLS)); // if tooling and stream tool is supported
-
-            if (modeStream) {
-                LOGGER.info("Use stream chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
-                if (streamChatModel == null) {
-                    streamChatModel = modelService.createStreamingChatModel(model, chatOptions.getModelOptions());
-
-                    streamChatAssistant = AiServices.builder(StreamChatAssistant.class)
-                            .streamingChatLanguageModel(streamChatModel)
-                            .chatMemory(MessageWindowChatMemory.withMaxMessages(chatOptions.getMaxMessages()))
-                            .tools(createTools())
-                            .build();
-
-                }
-            } else {
-                LOGGER.info("Use chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
-                if (chatModel == null) {
-                    chatModel = modelService.createChatModel(model, chatOptions.getModelOptions());
-
-                    chatAssistant = AiServices.builder(ChatAssistant.class)
-                            .chatLanguageModel(chatModel)
-                            .chatMemory(MessageWindowChatMemory.withMaxMessages(chatOptions.getMaxMessages()))
-                            .tools(createTools())
-                            .build();
-                }
-            }
+            initModel();
 
             chatMemory.add(UserMessage.userMessage(userMessage));
             CompletableFuture<AiMessage> futureAiMessage = new CompletableFuture<>();
@@ -113,7 +83,7 @@ public abstract class ModelControl {
             };
 
             if (chatOptions.isUseTools() && modelService.supports(model, LLM.TOOLS)) {
-                if (modelService.supports(model, LLM.STREAM_TOOLS)) {
+                if (streamChatModel != null) {
                     TokenStream tokenStream = streamChatAssistant.generate(chatMemory.messages());
                     tokenStream.onNext(handler::onNext);
                     tokenStream.onComplete(handler::onComplete);
@@ -125,7 +95,7 @@ public abstract class ModelControl {
                     handler.onComplete(Response.from(AiMessage.from(answer)));
                 }
             } else {
-                if (modelService.supports(model, LLM.STREAM)) {
+                if (streamChatModel != null) {
                     streamChatModel.generate(chatMemory.messages(), handler);
                 } else {
                     var answer = chatModel.generate(chatMemory.messages());
@@ -143,6 +113,56 @@ public abstract class ModelControl {
         }
     }
 
+    public void initModel() {
+
+        if (chatMemory != null || streamChatModel != null) return;
+
+        chatMemory = TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), modelService.createTokenizer(model));
+        if (MString.isSet(chatOptions.getPrompt()))
+            chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
+
+        boolean modeStream = chatOptions.getMode() == ChatOptions.MODE.STREAM // force streaming by config
+                ||
+                chatOptions.getMode() == ChatOptions.MODE.AUTO
+                &&
+                modelService.supports(model, LLM.STREAM) // if stream is supported and not tools
+                &&
+                (!chatOptions.isUseTools() || modelService.supports(model, LLM.STREAM_TOOLS)); // if tooling and stream tool is supported
+
+        if (modeStream) {
+            LOGGER.info("Use stream chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
+            if (streamChatModel == null) {
+                streamChatModel = modelService.createStreamingChatModel(model, chatOptions.getModelOptions());
+
+                streamChatAssistant = createStreamChatAssistant();
+
+            }
+        } else {
+            LOGGER.info("Use chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
+            if (chatModel == null) {
+                chatModel = modelService.createChatModel(model, chatOptions.getModelOptions());
+
+                chatAssistant = createChatAssistant();
+            }
+        }
+    }
+
+    public ChatAssistant createChatAssistant() {
+        return AiServices.builder(ChatAssistant.class)
+                .chatLanguageModel(chatModel)
+                .chatMemory(MessageWindowChatMemory.withMaxMessages(chatOptions.getMaxMessages()))
+                .tools(createTools())
+                .build();
+    }
+
+    public StreamChatAssistant createStreamChatAssistant() {
+        return AiServices.builder(StreamChatAssistant.class)
+                .streamingChatLanguageModel(streamChatModel)
+                .chatMemory(MessageWindowChatMemory.withMaxMessages(chatOptions.getMaxMessages()))
+                .tools(createTools())
+                .build();
+    }
+
     public void reset(ChatOptions options) {
         if (chatMemory != null)
             chatMemory.clear();
@@ -152,16 +172,12 @@ public abstract class ModelControl {
         streamChatAssistant = null;
         chatAssistant = null;
         this.chatOptions = options;
-//        if (MString.isSet(chatOptions.getPrompt()))
-//            chatHistory.addBubble("Prompt", true, ChatPanel.COLOR.YELLOW).setText(chatOptions.getPrompt());
-    }
-
-    public boolean isDefault() {
-        return model.isDefault();
     }
 
     protected abstract Bubble addChatBubble(String title);
 
-    protected abstract List<Object> createTools();
+    protected List<Object> createTools() {
+        return List.of();
+    }
 
 }
