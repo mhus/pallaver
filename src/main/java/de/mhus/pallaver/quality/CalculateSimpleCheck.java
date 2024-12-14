@@ -56,7 +56,7 @@ public class CalculateSimpleCheck implements QualityCheck {
                 }
             };
 
-            var answer = control.answer("Answer with one single Number. What is the result of the term '18*9+2*55'?").get();
+            var answer = control.answer("Answer with one single Number. What is the result of the term '18*9+2*55'?");
 
             var text = answer.text();
 
@@ -83,7 +83,7 @@ public class CalculateSimpleCheck implements QualityCheck {
 
             };
 
-            var answer = control.answer("Answer with one single Number. What is the result of the term '18*9+2*55'?").get();
+            var answer = control.answer("Answer with one single Number. What is the result of the term '18*9+2*55'?");
 
             var text = answer.text();
 

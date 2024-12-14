@@ -6,6 +6,7 @@ import de.mhus.pallaver.model.ModelService;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.StreamingResponseHandler;
@@ -34,7 +35,7 @@ public abstract class ModelControl {
     @Getter
     private ChatLanguageModel chatModel;
     @Getter
-    private TokenWindowChatMemory chatMemory;
+    private ChatMemory chatMemory;
     @Setter
     @Getter
     private ChatOptions chatOptions = new ChatOptions();
@@ -51,75 +52,101 @@ public abstract class ModelControl {
         return model.getTitle();
     }
 
-    public CompletableFuture<AiMessage> answer(String userMessage) {
-
-        var otherBubble = addChatBubble(model.getTitle());
-
+    public AiMessage answer(String userMessage) {
+        Bubble otherBubble = null;
         try {
 
             initModel();
+            otherBubble = addChatBubble(model.getTitle());
 
-            chatMemory.add(UserMessage.userMessage(userMessage));
+            addToChatMemory(userMessage);
             CompletableFuture<AiMessage> futureAiMessage = new CompletableFuture<>();
-            StreamingResponseHandler<AiMessage> handler = new StreamingResponseHandler<AiMessage>() {
-
-                @Override
-                public void onNext(String token) {
-                    otherBubble.appendText(token);
-                }
-
-                @Override
-                public void onComplete(Response<AiMessage> response) {
-                    futureAiMessage.complete(response.content());
-                    otherBubble.onComplete();
-                }
-
-                @Override
-                public void onError(Throwable e) {
-                    LOGGER.error("Error", e);
-                    otherBubble.appendText("Error: " + e.getMessage());
-                    otherBubble.onComplete();
-                }
-            };
+            StreamingResponseHandler<AiMessage> handler = createChatMessageHandler(futureAiMessage, otherBubble);
 
             if (chatOptions.isUseTools() && modelService.supports(model, LLM.TOOLS)) {
                 if (streamChatModel != null) {
-                    TokenStream tokenStream = streamChatAssistant.generate(chatMemory.messages());
-                    tokenStream.onNext(handler::onNext);
-                    tokenStream.onComplete(handler::onComplete);
-                    tokenStream.onError(handler::onError);
-                    tokenStream.start();
+                    answerWithStreamChatAssistant(userMessage, handler);
                 } else {
-                    String answer = chatAssistant.generate(userMessage);
-                    handler.onNext(answer);
-                    handler.onComplete(Response.from(AiMessage.from(answer)));
+                    answerWithChatAssistant(userMessage, handler);
                 }
             } else {
                 if (streamChatModel != null) {
-                    streamChatModel.generate(chatMemory.messages(), handler);
+                    answerWithStreamChatModel(userMessage, handler);
                 } else {
-                    var answer = chatModel.generate(chatMemory.messages());
-                    handler.onNext(answer.content().text());
-                    handler.onComplete(answer);
+                    answerWithChatModel(userMessage, handler);
                 }
             }
-            chatMemory.add(futureAiMessage.get());
-
-            return futureAiMessage;
+            var answer = futureAiMessage.get();
+            chatMemory.add(answer);
+            return answer;
         } catch (Exception e) {
             LOGGER.error("Error", e);
+            if (otherBubble != null)
+                otherBubble = addChatBubble(model.getTitle());
             otherBubble.appendText("Error: " + e.getMessage());
-            return CompletableFuture.completedFuture(AiMessage.from("Error: " + e.getMessage()));
+            return AiMessage.from("Error: " + e.getMessage());
         }
+    }
+
+    public void answerWithChatModel(String userMessage, StreamingResponseHandler<AiMessage> handler) {
+        var answer = chatModel.generate(chatMemory.messages());
+        handler.onNext(answer.content().text());
+        handler.onComplete(answer);
+    }
+
+    public void answerWithStreamChatModel(String userMessage, StreamingResponseHandler<AiMessage> handler) {
+        streamChatModel.generate(chatMemory.messages(), handler);
+    }
+
+    public void answerWithChatAssistant(String userMessage, StreamingResponseHandler<AiMessage> handler) {
+        String answer = chatAssistant.generate(userMessage);
+        handler.onNext(answer);
+        handler.onComplete(Response.from(AiMessage.from(answer)));
+    }
+
+    public void answerWithStreamChatAssistant(String userMessage, StreamingResponseHandler<AiMessage> handler) {
+        TokenStream tokenStream = streamChatAssistant.generate(chatMemory.messages());
+        tokenStream.onNext(handler::onNext);
+        tokenStream.onComplete(handler::onComplete);
+        tokenStream.onError(handler::onError);
+        tokenStream.start();
+    }
+
+    private StreamingResponseHandler<AiMessage> createChatMessageHandler(CompletableFuture<AiMessage> futureAiMessage, Bubble otherBubble) {
+        return new StreamingResponseHandler<AiMessage>() {
+            @Override
+            public void onNext(String token) {
+                otherBubble.appendText(token);
+            }
+
+            @Override
+            public void onComplete(Response<AiMessage> response) {
+                futureAiMessage.complete(response.content());
+                otherBubble.onComplete();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                LOGGER.error("Error", e);
+                otherBubble.appendText("Error: " + e.getMessage());
+                otherBubble.onComplete();
+            }
+        };
+
+    }
+
+    private void addToChatMemory(String userMessage) {
+        chatMemory.add(UserMessage.userMessage(userMessage));
     }
 
     public void initModel() {
 
         if (chatMemory != null || streamChatModel != null) return;
 
-        chatMemory = TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), modelService.createTokenizer(model));
-        if (MString.isSet(chatOptions.getPrompt()))
+        chatMemory = createChatMemory();
+        if (MString.isSet(chatOptions.getPrompt())) {
             chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
+        }
 
         boolean modeStream = chatOptions.getMode() == ChatOptions.MODE.STREAM // force streaming by config
                 ||
@@ -132,19 +159,29 @@ public abstract class ModelControl {
         if (modeStream) {
             LOGGER.info("Use stream chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
             if (streamChatModel == null) {
-                streamChatModel = modelService.createStreamingChatModel(model, chatOptions.getModelOptions());
-
+                streamChatModel = createStreamChatModel();
                 streamChatAssistant = createStreamChatAssistant();
 
             }
         } else {
             LOGGER.info("Use chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
             if (chatModel == null) {
-                chatModel = modelService.createChatModel(model, chatOptions.getModelOptions());
-
+                chatModel = createChatModel();
                 chatAssistant = createChatAssistant();
             }
         }
+    }
+
+    public ChatLanguageModel createChatModel() {
+        return modelService.createChatModel(model, chatOptions.getModelOptions());
+    }
+
+    public StreamingChatLanguageModel createStreamChatModel() {
+        return modelService.createStreamingChatModel(model, chatOptions.getModelOptions());
+    }
+
+    public ChatMemory createChatMemory() {
+        return TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), modelService.createTokenizer(model));
     }
 
     public ChatAssistant createChatAssistant() {

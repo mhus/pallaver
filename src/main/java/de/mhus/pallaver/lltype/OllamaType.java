@@ -56,6 +56,10 @@ public class OllamaType implements LLType {
             builder.seed(options.getSeed());
         if (options.getTimeoutInSeconds() != null)
             builder.timeout(Duration.ofSeconds(options.getTimeoutInSeconds()));
+
+        if (options.isLogging())
+            builder.logRequests(true).logResponses(true);
+
         return builder.build();
     }
 
@@ -76,6 +80,10 @@ public class OllamaType implements LLType {
             builder.seed(options.getSeed());
         if (options.getTimeoutInSeconds() != null)
             builder.timeout(Duration.ofSeconds(options.getTimeoutInSeconds()));
+
+        if (options.isLogging())
+            builder.logRequests(true).logResponses(true);
+
         return builder.build();
     }
 

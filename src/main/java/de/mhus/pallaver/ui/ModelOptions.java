@@ -18,5 +18,7 @@ public class ModelOptions {
     private Integer seed = null;
     @Builder.Default
     private Integer timeoutInSeconds = null;
+    @Builder.Default
+    private boolean logging = true;
 
 }

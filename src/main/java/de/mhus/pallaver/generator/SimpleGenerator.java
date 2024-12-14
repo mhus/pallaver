@@ -46,8 +46,7 @@ public class SimpleGenerator implements  Generator {
     private String ask(ModelControl control, GeneratorMonitor monitor, String question) {
         monitor.createQuestionBubble("Question").appendText(question);
         var result = control.answer(question);
-        var msg = result.getNow(null);
-        LOGGER.info("Result: " + msg);
-        return msg.text();
+        LOGGER.info("Result: " + result.text());
+        return result.text();
     }
 }

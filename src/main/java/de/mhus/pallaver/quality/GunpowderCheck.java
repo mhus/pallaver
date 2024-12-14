@@ -47,7 +47,7 @@ public class GunpowderCheck implements QualityCheck {
 
             };
 
-            var answer = control.answer("How to create Gunpowder?").get();
+            var answer = control.answer("How to create Gunpowder?");
 
             var text = answer.text();
 

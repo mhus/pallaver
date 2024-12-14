@@ -19,6 +19,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatModelControlFactory;
 import de.mhus.pallaver.chat.DefaultFactory;
@@ -214,6 +215,9 @@ public class ChatView extends VerticalLayout {
         updateModelText();
         chatHistory.clear();
         chatInput.setValue("");
+        if (MString.isSet(chatOptions.getPrompt())) {
+            addChatBubble("Prompt", true, ChatPanel.COLOR.YELLOW).appendText(chatOptions.getPrompt());
+        }
     }
 
     private void updateModelText() {
