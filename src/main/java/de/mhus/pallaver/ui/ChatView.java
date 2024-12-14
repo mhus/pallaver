@@ -21,7 +21,7 @@ import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatModelControlFactory;
-import de.mhus.pallaver.chat.SimpleChatAssistantFactory;
+import de.mhus.pallaver.chat.DefaultFactory;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import jakarta.annotation.PostConstruct;
@@ -47,12 +47,12 @@ public class ChatView extends VerticalLayout {
     @Autowired
     private List<ChatModelControlFactory> controlFactories;
     @Autowired
-    private SimpleChatAssistantFactory simpleChatAssistantFactory;
-    private ChatModelControlFactory modelControlFactory;
+    private DefaultFactory defaultModelControlFactory;
+    private ChatModelControlFactory selectedModelControlFactory;
 
     @PostConstruct
     public void init() {
-        modelControlFactory = simpleChatAssistantFactory;
+        selectedModelControlFactory = defaultModelControlFactory;
         var menuBar = createMenuBar();
         infoText = new Span("");
         chatHistory = new ChatPanel();
@@ -128,13 +128,13 @@ public class ChatView extends VerticalLayout {
         controlFactories.forEach(factory -> {
             var item = menuControl.addItem(factory.getTitle());
             item.setCheckable(true);
-            item.setChecked(factory == simpleChatAssistantFactory);
+            item.setChecked(factory == defaultModelControlFactory);
             item.addClickListener(e -> {
-                modelControlFactory = factory;
+                selectedModelControlFactory = factory;
                 menuControl.getItems().forEach(i -> i.setChecked( i == e.getSource() ));
                 updateModelText();
                 actionReset();
-                chatInput.setValue(modelControlFactory.getDefaultPrompt());
+                chatInput.setValue(selectedModelControlFactory.getDefaultPrompt());
             });
         });
 
@@ -219,7 +219,7 @@ public class ChatView extends VerticalLayout {
     private void updateModelText() {
         final StringBuffer text = new StringBuffer();
         models.stream().filter(ModelItem::isEnabled).forEach(m -> text.append(m.getTitle()).append(" "));
-        infoText.setText("Control: " + modelControlFactory.getTitle() + ", Models: " + text);
+        infoText.setText("Control: " + selectedModelControlFactory.getTitle() + ", Models: " + text);
     }
 
     @Getter
@@ -255,7 +255,7 @@ public class ChatView extends VerticalLayout {
 
         public void answer(String userMessage, ChatPanel.COLOR color, UI ui) {
             if (control == null) {
-                control = modelControlFactory.createModelControl(model, chatOptions, new ChatViewBubbleFactory(color, ui));
+                control = selectedModelControlFactory.createModelControl(model, chatOptions, new ChatViewBubbleFactory(color, ui));
             }
             control.answer(userMessage);
         }

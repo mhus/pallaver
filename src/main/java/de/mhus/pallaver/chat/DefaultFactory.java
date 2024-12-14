@@ -11,14 +11,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class SimpleChatAssistantFactory implements ChatModelControlFactory {
+public class DefaultFactory implements ChatModelControlFactory {
 
     @Autowired
     private ModelService modelService;
 
     @Override
     public String getTitle() {
-        return "Simple";
+        return "Default";
     }
 
     @Override

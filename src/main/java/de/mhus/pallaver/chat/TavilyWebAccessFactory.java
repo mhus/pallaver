@@ -4,29 +4,16 @@ import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import de.mhus.pallaver.ui.ChatAssistant;
 import de.mhus.pallaver.ui.ChatOptions;
-import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.DocumentLoader;
-import dev.langchain4j.data.document.DocumentParser;
-import dev.langchain4j.data.document.DocumentSource;
-import dev.langchain4j.data.document.DocumentSplitter;
-import dev.langchain4j.data.document.Metadata;
-import dev.langchain4j.data.document.parser.TextDocumentParser;
-import dev.langchain4j.data.document.splitter.DocumentSplitters;
-import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.embedding.onnx.bgesmallenv15q.BgeSmallEnV15QuantizedEmbeddingModel;
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.content.retriever.WebSearchContentRetriever;
 import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
-import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import dev.langchain4j.web.search.WebSearchEngine;
 import dev.langchain4j.web.search.tavily.TavilyWebSearchEngine;
 import lombok.extern.slf4j.Slf4j;
@@ -34,14 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
 
 @Slf4j
 @Service
-public class WebAccessChatAssistanceFactory implements ChatModelControlFactory {
+public class TavilyWebAccessFactory implements ChatModelControlFactory {
 
     @Autowired
     private ModelService modelService;
@@ -51,7 +34,7 @@ public class WebAccessChatAssistanceFactory implements ChatModelControlFactory {
 
     @Override
     public String getTitle() {
-        return "Web Access";
+        return "Tavily Web Access";
     }
 
     @Override
@@ -79,16 +62,6 @@ public class WebAccessChatAssistanceFactory implements ChatModelControlFactory {
         public ChatAssistant createChatAssistant() {
             EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
 
-            EmbeddingStore<TextSegment> embeddingStore =
-                    embed("/documents/miles-of-smiles-terms-of-use.txt", embeddingModel);
-
-            ContentRetriever embeddingStoreContentRetriever = EmbeddingStoreContentRetriever.builder()
-                    .embeddingStore(embeddingStore)
-                    .embeddingModel(embeddingModel)
-                    .maxResults(2)
-                    .minScore(0.6)
-                    .build();
-
             // Let's create our web search content retriever.
             WebSearchEngine webSearchEngine = TavilyWebSearchEngine.builder()
                     .apiKey(tavilyApiKey) // get a free key: https://app.tavily.com/sign-in
@@ -100,7 +73,7 @@ public class WebAccessChatAssistanceFactory implements ChatModelControlFactory {
                     .build();
 
             // Let's create a query router that will route each query to both retrievers.
-            QueryRouter queryRouter = new DefaultQueryRouter(embeddingStoreContentRetriever, webSearchContentRetriever);
+            QueryRouter queryRouter = new DefaultQueryRouter(webSearchContentRetriever);
 
             RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
                     .queryRouter(queryRouter)
@@ -113,35 +86,6 @@ public class WebAccessChatAssistanceFactory implements ChatModelControlFactory {
                     .build();
         }
 
-    }
-
-    private EmbeddingStore<TextSegment> embed(String resourcePath, EmbeddingModel embeddingModel) {
-        LOGGER.info("Embedding resource: {}", resourcePath);
-        DocumentParser documentParser = new TextDocumentParser();
-        Document document = loadDocument(getClass().getResourceAsStream(resourcePath), resourcePath, documentParser);
-
-        DocumentSplitter splitter = DocumentSplitters.recursive(300, 0);
-        List<TextSegment> segments = splitter.split(document);
-
-        List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-
-        EmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
-        embeddingStore.addAll(embeddings, segments);
-        return embeddingStore;
-    }
-
-    public static Document loadDocument(InputStream is, String resourceName, DocumentParser documentParser) {
-            return DocumentLoader.load(new DocumentSource() {
-                @Override
-                public InputStream inputStream() throws IOException {
-                    return is;
-                }
-
-                @Override
-                public Metadata metadata() {
-                    return new Metadata().put("file_name", resourceName);
-                }
-            }, documentParser);
     }
 
 }
