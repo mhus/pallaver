@@ -12,6 +12,7 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import de.mhus.pallaver.generator.Generator;
+import de.mhus.pallaver.generator.GeneratorMonitor;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import jakarta.annotation.PostConstruct;

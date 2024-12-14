@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

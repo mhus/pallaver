@@ -22,8 +22,10 @@ import com.vaadin.flow.router.Route;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatModelControlFactory;
+import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.chat.DefaultFactory;
 import de.mhus.pallaver.model.LLModel;
+import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -76,7 +78,6 @@ public class ChatView extends VerticalLayout {
 
         var sendBtn = new Button("Press Control+Enter to submit", e -> actionSendMessage());
         sendBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
-
 
         add(menuBar, infoText, splitLayout, sendBtn);
         setSizeFull();
@@ -139,8 +140,15 @@ public class ChatView extends VerticalLayout {
             });
         });
 
+        var menuPrompt = menuBar.addItem("Prompt").getSubMenu();
+        menuPrompt.addItem("awesome-chatgpt-prompts", e -> actionSelectPrompt("awesome-chatgpt-prompts", "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/refs/heads/main/prompts.csv"));
+
 
         return menuBar;
+    }
+
+    private void actionSelectPrompt(String title, String url) {
+
     }
 
     private void actionShowOptions() {

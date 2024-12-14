@@ -1,4 +1,4 @@
-package de.mhus.pallaver.chat;
+package de.mhus.pallaver.wrapper;
 
 import dev.langchain4j.web.search.WebSearchEngine;
 import dev.langchain4j.web.search.WebSearchRequest;
@@ -17,7 +17,11 @@ public class WebSearchEngineLogWrapper implements WebSearchEngine {
     public WebSearchResults search(WebSearchRequest webSearchRequest) {
         LOGGER.info("Searching in {} for: {}", webSearchEngine.getClass().getSimpleName(), webSearchRequest);
         var result = webSearchEngine.search(webSearchRequest);
-        LOGGER.info("Found {}", result);
+        if (result != null && result.results() != null) {
+            for (var webSearchOrganicResult : result.results()) {
+                LOGGER.info("Found in web: {}", webSearchOrganicResult);
+            }
+        }
         return result;
     }
 }

@@ -1,7 +1,6 @@
 package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLType;
-import de.mhus.pallaver.ui.LLTypeFactory;
 import dev.langchain4j.model.ollama.OllamaModels;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;

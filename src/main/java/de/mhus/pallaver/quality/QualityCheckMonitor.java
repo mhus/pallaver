@@ -1,4 +1,6 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.quality;
+
+import de.mhus.pallaver.ui.Bubble;
 
 public interface QualityCheckMonitor extends Bubble {
 

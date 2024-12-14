@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver;
 
 public class LLM {
     public static final String TOOLS = "tools";

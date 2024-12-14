@@ -3,8 +3,7 @@ package de.mhus.pallaver.chat;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import de.mhus.pallaver.ui.Bubble;
-import de.mhus.pallaver.ui.ChatOptions;
-import de.mhus.pallaver.ui.ModelControl;
+import de.mhus.pallaver.model.ModelControl;
 
 public class ChatModelControl extends ModelControl {
 

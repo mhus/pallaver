@@ -4,7 +4,6 @@ import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import de.mhus.pallaver.tools.JavaScriptTool;
 import de.mhus.pallaver.tools.SimpleCalculator;
-import de.mhus.pallaver.ui.ChatOptions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

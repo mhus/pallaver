@@ -1,5 +1,6 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.chat;
 
+import de.mhus.pallaver.model.ModelOptions;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

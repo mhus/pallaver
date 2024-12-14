@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLType;
 

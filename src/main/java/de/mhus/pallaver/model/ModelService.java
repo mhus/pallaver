@@ -2,8 +2,7 @@ package de.mhus.pallaver.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import de.mhus.pallaver.ui.LLTypeFactory;
-import de.mhus.pallaver.ui.ModelOptions;
+import de.mhus.pallaver.lltype.LLTypeFactory;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;

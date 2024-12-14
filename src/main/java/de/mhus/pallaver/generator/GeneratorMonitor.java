@@ -1,6 +1,9 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.generator;
 
 import com.vaadin.flow.component.UI;
+import de.mhus.pallaver.ui.Bubble;
+import de.mhus.pallaver.ui.ChatBubble;
+import de.mhus.pallaver.ui.ChatPanel;
 
 public class GeneratorMonitor {
     private final UI ui;

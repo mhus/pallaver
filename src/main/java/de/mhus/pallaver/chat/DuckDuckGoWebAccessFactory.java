@@ -2,6 +2,7 @@ package de.mhus.pallaver.chat;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.tools.DuckDuckGoWebsearchEngine;
 import de.mhus.pallaver.wrapper.WebSearchEngineLogWrapper;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -14,26 +15,21 @@ import dev.langchain4j.rag.query.router.DefaultQueryRouter;
 import dev.langchain4j.rag.query.router.QueryRouter;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.web.search.WebSearchEngine;
-import dev.langchain4j.web.search.tavily.TavilyWebSearchEngine;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
 @Slf4j
 @Service
-public class TavilyWebAccessFactory implements ChatModelControlFactory {
+public class DuckDuckGoWebAccessFactory implements ChatModelControlFactory {
 
     @Autowired
     private ModelService modelService;
 
-    @Value("${tavily.apiKey:}")
-    private String tavilyApiKey;
-
     @Override
     public String getTitle() {
-        return "Tavily Web Access";
+        return "DuckDuckGo Web Access";
     }
 
     @Override
@@ -62,9 +58,7 @@ public class TavilyWebAccessFactory implements ChatModelControlFactory {
             EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
 
             // Let's create our web search content retriever.
-            WebSearchEngine webSearchEngine = TavilyWebSearchEngine.builder()
-                    .apiKey(tavilyApiKey) // get a free key: https://app.tavily.com/sign-in
-                    .build();
+            WebSearchEngine webSearchEngine = new DuckDuckGoWebsearchEngine();
 
             ContentRetriever webSearchContentRetriever = WebSearchContentRetriever.builder()
                     .webSearchEngine(new WebSearchEngineLogWrapper(webSearchEngine))

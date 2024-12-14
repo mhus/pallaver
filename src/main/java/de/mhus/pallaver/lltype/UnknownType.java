@@ -2,7 +2,7 @@ package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.LLType;
-import de.mhus.pallaver.ui.ModelOptions;
+import de.mhus.pallaver.model.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;

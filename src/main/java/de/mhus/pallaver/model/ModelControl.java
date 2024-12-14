@@ -1,8 +1,11 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.model;
 
 import de.mhus.commons.tools.MString;
-import de.mhus.pallaver.model.LLModel;
-import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.chat.ChatAssistant;
+import de.mhus.pallaver.ui.Bubble;
+import de.mhus.pallaver.chat.ChatOptions;
+import de.mhus.pallaver.LLM;
+import de.mhus.pallaver.chat.StreamChatAssistant;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -64,13 +67,13 @@ public abstract class ModelControl {
             StreamingResponseHandler<AiMessage> handler = createChatMessageHandler(futureAiMessage, otherBubble);
 
             if (chatOptions.isUseTools() && modelService.supports(model, LLM.TOOLS)) {
-                if (streamChatModel != null) {
+                if (isStreamChatModel()) {
                     answerWithStreamChatAssistant(userMessage, handler);
                 } else {
                     answerWithChatAssistant(userMessage, handler);
                 }
             } else {
-                if (streamChatModel != null) {
+                if (isStreamChatModel()) {
                     answerWithStreamChatModel(userMessage, handler);
                 } else {
                     answerWithChatModel(userMessage, handler);
@@ -86,6 +89,16 @@ public abstract class ModelControl {
             otherBubble.appendText("Error: " + e.getMessage());
             return AiMessage.from("Error: " + e.getMessage());
         }
+    }
+
+    public boolean isStreamChatModel() {
+        return  chatOptions.getMode() == ChatOptions.MODE.STREAM // force streaming by config
+                ||
+                chatOptions.getMode() == ChatOptions.MODE.AUTO
+                &&
+                modelService.supports(model, LLM.STREAM) // if stream is supported and not tools
+                &&
+                (!chatOptions.isUseTools() || modelService.supports(model, LLM.STREAM_TOOLS)); // if tooling and stream tool is supported
     }
 
     public void answerWithChatModel(String userMessage, StreamingResponseHandler<AiMessage> handler) {
@@ -148,15 +161,7 @@ public abstract class ModelControl {
             chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
         }
 
-        boolean modeStream = chatOptions.getMode() == ChatOptions.MODE.STREAM // force streaming by config
-                ||
-                chatOptions.getMode() == ChatOptions.MODE.AUTO
-                &&
-                modelService.supports(model, LLM.STREAM) // if stream is supported and not tools
-                &&
-                (!chatOptions.isUseTools() || modelService.supports(model, LLM.STREAM_TOOLS)); // if tooling and stream tool is supported
-
-        if (modeStream) {
+        if (isStreamChatModel()) {
             LOGGER.info("Use stream chat model: {} and tooling {}", model.getTitle(),chatOptions.isUseTools());
             if (streamChatModel == null) {
                 streamChatModel = createStreamChatModel();
