@@ -140,16 +140,16 @@ public class ChatView extends VerticalLayout {
             });
         });
 
-        var menuPrompt = menuBar.addItem("Prompt").getSubMenu();
-        menuPrompt.addItem("awesome-chatgpt-prompts", e -> actionSelectPrompt("awesome-chatgpt-prompts", "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/refs/heads/main/prompts.csv"));
+//        var menuPrompt = menuBar.addItem("Prompt").getSubMenu();
+//        menuPrompt.addItem("awesome-chatgpt-prompts", e -> actionSelectPrompt("awesome-chatgpt-prompts", "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/refs/heads/main/prompts.csv"));
 
 
         return menuBar;
     }
 
-    private void actionSelectPrompt(String title, String url) {
-
-    }
+//    private void actionSelectPrompt(String title, String url) {
+//
+//    }
 
     private void actionShowOptions() {
         var dialog = new Dialog();

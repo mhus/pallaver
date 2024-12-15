@@ -44,6 +44,8 @@ public abstract class ModelControl {
     private ChatOptions chatOptions = new ChatOptions();
     private StreamChatAssistant streamChatAssistant;
     private ChatAssistant chatAssistant;
+    @Getter
+    private Exception exception;
 
     public ModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions) {
         this.model = model;
@@ -57,6 +59,7 @@ public abstract class ModelControl {
 
     public AiMessage answer(String userMessage) {
         Bubble otherBubble = null;
+        exception = null;
         try {
 
             initModel();
@@ -87,6 +90,7 @@ public abstract class ModelControl {
             if (otherBubble != null)
                 otherBubble = addChatBubble(model.getTitle());
             otherBubble.appendText("Error: " + e.getMessage());
+            exception = e;
             return AiMessage.from("Error: " + e.getMessage());
         }
     }
@@ -206,6 +210,7 @@ public abstract class ModelControl {
     }
 
     public void reset(ChatOptions options) {
+        if (options == null) options = chatOptions;
         if (chatMemory != null)
             chatMemory.clear();
         streamChatModel = null;
