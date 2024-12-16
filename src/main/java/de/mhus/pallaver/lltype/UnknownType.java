@@ -1,11 +1,12 @@
 package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLModel;
-import de.mhus.pallaver.model.LLType;
 import de.mhus.pallaver.model.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+
+import java.util.List;
 
 public class UnknownType implements LLType {
     private final String value;
@@ -25,8 +26,8 @@ public class UnknownType implements LLType {
     }
 
     @Override
-    public String getUrl() {
-        return "";
+    public List<LLModel> getDefaultModels() {
+        return List.of();
     }
 
     @Override

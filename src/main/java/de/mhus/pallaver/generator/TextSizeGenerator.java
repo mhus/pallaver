@@ -1,13 +1,15 @@
-package de.mhus.pallaver.quality;
+package de.mhus.pallaver.generator;
 
 import de.mhus.commons.util.Lorem;
 import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
-import de.mhus.pallaver.model.ModelOptions;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.quality.QualityCheck;
+import de.mhus.pallaver.quality.QualityCheckMonitor;
 import de.mhus.pallaver.tools.JavaScriptTool;
 import de.mhus.pallaver.ui.Bubble;
+import dev.langchain4j.data.message.UserMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +18,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class TextSizeCheck implements QualityCheck {
+public class TextSizeGenerator implements Generator {
 
     @Autowired
     ModelService modelService;
@@ -27,18 +29,14 @@ public class TextSizeCheck implements QualityCheck {
     }
 
     @Override
-    public void run(LLModel model, QualityCheckMonitor monitor) throws Exception {
-        testLoremIpsum(model, monitor.forTest("loremIpsum"));
-    }
-
-    private void testLoremIpsum(LLModel model, QualityCheckMonitor.QualityCheckTestMonitor monitor) {
+    public void run(LLModel model, GeneratorMonitor monitor) {
         try {
             var control = new ModelControl(model, modelService, ChatOptions
                     .builder()
                     .build()) {
                 @Override
                 protected Bubble addChatBubble(String title) {
-                    return monitor.getBubble();
+                    return monitor.createQuestionBubble(title);
                 }
 
                 @Override
@@ -49,18 +47,19 @@ public class TextSizeCheck implements QualityCheck {
             };
 
             for (int i = 4; i < 15; i++) {
+                control.initModel();
                 var question = Lorem.createWithSize(i * 300);
                 question = question + "\n\nAnswer with this question with: ok";
-                monitor.getBubble().appendText("\n- - -\nTest: " + question.length() + "\n");
+                var tokenCnt = control.getTokenizer().estimateTokenCountInMessage(UserMessage.from(question));
+                var bubble = monitor.createQuestionBubble("Test: " + question.length() + " chars, " + tokenCnt + " tokens");
                 control.reset(null);
                 control.answer(question);
                 if (control.getException() != null) {
-                    monitor.reportError("Failed with " + question.length() + " chars");
+                    bubble.appendText("Failed with " + question.length() + " chars");
                     return;
                 }
             }
 
-            monitor.setResult(true);
         } catch (Exception e) {
             monitor.reportError(e);
         }

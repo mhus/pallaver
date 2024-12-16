@@ -2,7 +2,7 @@ package de.mhus.pallaver.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import de.mhus.pallaver.lltype.LLTypeFactory;
+import de.mhus.pallaver.lltype.LLType;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -27,7 +26,7 @@ import java.util.TreeSet;
 public class ModelService {
 
     @Autowired(required = false)
-    private List<LLTypeFactory> llTypeFactories;
+    private List<LLType> llType;
 
     @Value("${pallaver.models:models.json}")
     private String modelsFile;
@@ -36,11 +35,8 @@ public class ModelService {
             .enable(SerializationFeature.INDENT_OUTPUT);
 
     public Collection<LLType> getModelTypes() {
-        if (llTypeFactories == null) return Collections.emptyList();
-        return llTypeFactories.stream()
-                .collect(ArrayList::new,
-                        (list, factory) -> list.addAll(factory.getTypes()),
-                        ArrayList::addAll);
+        if (llType == null) return Collections.emptyList();
+        return Collections.unmodifiableList(llType);
     }
 
     public Collection<LLModel> getModels() {

@@ -13,6 +13,7 @@ import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.StreamingResponseHandler;
+import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.output.Response;
@@ -46,6 +47,8 @@ public abstract class ModelControl {
     private ChatAssistant chatAssistant;
     @Getter
     private Exception exception;
+    @Getter
+    private Tokenizer tokenizer;
 
     public ModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions) {
         this.model = model;
@@ -190,7 +193,8 @@ public abstract class ModelControl {
     }
 
     public ChatMemory createChatMemory() {
-        return TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), modelService.createTokenizer(model));
+        tokenizer = modelService.createTokenizer(model);
+        return TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), tokenizer);
     }
 
     public ChatAssistant createChatAssistant() {

@@ -6,12 +6,14 @@ import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
+import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.contextmenu.MenuItem;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.menubar.MenuBar;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.component.textfield.NumberField;
@@ -27,6 +29,7 @@ import de.mhus.pallaver.chat.DefaultFactory;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
+import dev.langchain4j.data.message.UserMessage;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -79,7 +82,20 @@ public class ChatView extends VerticalLayout {
         var sendBtn = new Button("Press Control+Enter to submit", e -> actionSendMessage());
         sendBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        add(menuBar, infoText, splitLayout, sendBtn);
+        var inputPromptMenuBtn = new Button("Prompt");
+        var inputPromptMenu = new ContextMenu();
+        inputPromptMenu.setOpenOnClick(true);
+        inputPromptMenu.setTarget(inputPromptMenuBtn);
+        inputPromptMenu.addItem("Schmetterlinge", e -> chatInput.setValue("Was sind Schmetterlinge?"));
+
+        var tokensCntBtn = new Button("Tokens", e -> actionEstimatedTokens());
+
+        var btnLayout = new HorizontalLayout(sendBtn, inputPromptMenuBtn, tokensCntBtn);
+        btnLayout.setWidthFull();
+        btnLayout.setMargin(false);
+        btnLayout.setPadding(false);
+
+        add(menuBar, infoText, splitLayout, btnLayout);
         setSizeFull();
 
         models.stream().filter(ModelItem::isDefault).forEach(m -> {
@@ -87,6 +103,18 @@ public class ChatView extends VerticalLayout {
             m.enabled = true;
         });
         updateModelText();
+    }
+
+    private void actionEstimatedTokens() {
+        var userMessage = chatInput.getValue();
+        var out = new StringBuilder();
+        models.stream().filter(ModelItem::isEnabled).forEach(m -> {
+            var tokenizer = modelService.createTokenizer(m.getModel());
+            var cnt = tokenizer.estimateTokenCountInMessage(UserMessage.from(userMessage));
+            out.append("* ").append(m.getTitle()).append(": ").append(cnt).append("\n");
+        });
+        addChatBubble("Tokens", true, ChatPanel.COLOR.YELLOW).setText("Estimated Tokens:\n" + out);
+        chatHistory.scrollToEnd();
     }
 
     private void actionSendMessage() {

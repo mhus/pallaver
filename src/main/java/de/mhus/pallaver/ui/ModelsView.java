@@ -8,6 +8,7 @@ import com.vaadin.flow.component.listbox.ListBox;
 import com.vaadin.flow.component.menubar.MenuBar;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.splitlayout.SplitLayout;
+import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.PageTitle;
@@ -15,7 +16,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.mhus.pallaver.lltype.UnknownType;
 import de.mhus.pallaver.model.LLModel;
-import de.mhus.pallaver.model.LLType;
+import de.mhus.pallaver.lltype.LLType;
 import de.mhus.pallaver.model.ModelService;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,9 @@ public class ModelsView extends VerticalLayout {
     private ComboBox<LLType> modelType;
     private LLModel modelItem;
     private Checkbox modelIsDefault;
+    private TextField modelModel;
+    private TextField modelUrl;
+    private PasswordField modelApiKey;
 
     @PostConstruct
     public void init() {
@@ -72,12 +76,11 @@ public class ModelsView extends VerticalLayout {
 
     private void actionGenerateAll() {
         modelService.getModelTypes().forEach(t -> {
-            if (modelListDataProviderList.stream().filter(m -> m.getType().equals(t.getName())).findFirst().isEmpty()) {
-                var newItem = new LLModel();
-                newItem.setType(t.getName());
-                newItem.setTitle(t.getTitle());
-                modelListDataProviderList.add(newItem);
-            }
+            t.getDefaultModels().forEach(m -> {
+                if (modelListDataProviderList.stream().filter(mm -> mm.getType().equals(m.getType()) && mm.getModel().equals(m.getModel()) ).findFirst().isEmpty()) {
+                    modelListDataProviderList.add(m);
+                }
+            });
         });
         modelListDataProvider.refreshAll();
     }
@@ -110,6 +113,12 @@ public class ModelsView extends VerticalLayout {
             modelTitle.setEnabled(false);
             modelType.clear();
             modelType.setEnabled(false);
+            modelModel.clear();
+            modelModel.setEnabled(false);
+            modelUrl.clear();
+            modelUrl.setEnabled(false);
+            modelApiKey.clear();
+            modelApiKey.setEnabled(false);
             modelIsDefault.setValue(false);
             modelIsDefault.setEnabled(false);
         } else {
@@ -117,6 +126,12 @@ public class ModelsView extends VerticalLayout {
             modelTitle.setEnabled(true);
             modelType.setValue(typeList.stream().filter(i -> i.getName().equals(item.getType())).findFirst().orElseGet(() -> new UnknownType(item.getType()) ) );
             modelType.setEnabled(true);
+            modelModel.setValue(item.getModel());
+            modelModel.setEnabled(true);
+            modelUrl.setValue(item.getUrl());
+            modelUrl.setEnabled(true);
+            modelApiKey.setValue(item.getApiKey());
+            modelApiKey.setEnabled(true);
             modelIsDefault.setValue(item.isDefault());
             modelIsDefault.setEnabled(true);
         }
@@ -164,6 +179,27 @@ public class ModelsView extends VerticalLayout {
                 modelItem.setType(e.getValue().getName());
             }
         });
+        modelModel = new TextField("Model");
+        modelModel.setEnabled(false);
+        modelModel.addValueChangeListener(e -> {
+            if (modelItem != null) {
+                modelItem.setModel(e.getValue());
+            }
+        });
+        modelUrl = new TextField("Url");
+        modelUrl.setEnabled(false);
+        modelUrl.addValueChangeListener(e -> {
+            if (modelItem != null) {
+                modelItem.setUrl(e.getValue());
+            }
+        });
+        modelApiKey = new PasswordField("Api Key");
+        modelApiKey.setEnabled(false);
+        modelApiKey.addValueChangeListener(e -> {
+            if (modelItem != null) {
+                modelItem.setApiKey(e.getValue());
+            }
+        });
         modelIsDefault = new Checkbox("Is Default");
         modelIsDefault.addValueChangeListener(e -> {
             if (modelItem != null) {
@@ -171,7 +207,7 @@ public class ModelsView extends VerticalLayout {
             }
         });
 
-        formLayout.add(modelTitle, modelType, modelIsDefault);
+        formLayout.add(modelTitle, modelType, modelModel, modelUrl, modelApiKey, modelIsDefault);
         formLayout.setSizeFull();
         formLayout.addClassNames(LumoUtility.Padding.Horizontal.MEDIUM);
         return formLayout;

@@ -2,6 +2,7 @@ package de.mhus.pallaver.ui;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.contextmenu.MenuItem;
+import com.vaadin.flow.component.contextmenu.SubMenu;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.listbox.ListBox;
@@ -15,6 +16,7 @@ import de.mhus.pallaver.generator.Generator;
 import de.mhus.pallaver.generator.GeneratorMonitor;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.wrapper.EmbeddingStoreLogWrapper;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,6 +39,8 @@ public class GeneratorView extends VerticalLayout {
     @Autowired(required = false)
     private List<Generator> generators;
     private ListBox<Item> generatorList;
+    private SubMenu menuModel;
+    private List<MyModelItem> modelItems = new ArrayList<>();
 
     @PostConstruct
     public void init() {
@@ -78,10 +82,12 @@ public class GeneratorView extends VerticalLayout {
     private MenuBar createMenuBar() {
         var menuBar = new MenuBar();
         menuBar.addItem(VaadinIcon.RECYCLE.create(), e -> actionReset());
-        var menuModel = menuBar.addItem("Model").getSubMenu();
+        menuModel = menuBar.addItem("Model").getSubMenu();
         modelService.getModels().forEach(model -> {
             var item = menuModel.addItem(model.getTitle());
-            new MyModelItem(model, item);
+            item.setCheckable(true);
+            item.setChecked(false);
+            modelItems.add(new MyModelItem(model, item));
         });
         menuBar.addItem("Run", e -> actionRun());
         return menuBar;
@@ -138,6 +144,7 @@ public class GeneratorView extends VerticalLayout {
 
             item.addClickListener(e -> {
                 selectedModelItem = this;
+                modelItems.forEach(m -> m.getItem().setChecked(m == selectedModelItem));
                 updateModelText();
             });
         }
