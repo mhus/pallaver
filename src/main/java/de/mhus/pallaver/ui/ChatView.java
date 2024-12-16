@@ -31,6 +31,7 @@ import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
 import dev.langchain4j.data.message.UserMessage;
+import elemental.json.JsonType;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +93,7 @@ public class ChatView extends VerticalLayout {
         try {
             reader.readHeader(true);
             while (reader.next()) {
-                var prompt = reader.get("prompt");
+                var prompt = reader.get("prompt").replaceAll("\\\\n", "\n");
                 inputPromptMenu.addItem(reader.get("title"), e -> chatInput.setValue(prompt));
             }
         } catch (Exception e) {
@@ -120,18 +121,30 @@ public class ChatView extends VerticalLayout {
         var out = new StringBuilder();
         models.stream().filter(ModelItem::isEnabled).forEach(m -> {
             var tokenizer = modelService.createTokenizer(m.getModel());
-            var cnt = tokenizer.estimateTokenCountInMessage(UserMessage.from(userMessage));
-            out.append("* ").append(m.getTitle()).append(": ").append(cnt).append("\n");
+            var inputTokensCnt = MString.isEmpty(userMessage) ? 0 : tokenizer.estimateTokenCountInMessage(UserMessage.from(userMessage));
+            LOGGER.info("Model {}:", m.getTitle());
+            var memoryTokenCnt = m.getControl().getChatMemory().messages().stream().mapToInt(chatMessage -> {
+                var t = tokenizer.estimateTokenCountInMessage(chatMessage);
+                LOGGER.info("Model {} memory message {}: {}", m.getTitle(), t, chatMessage);
+                return t;
+            }).sum();
+            out.append("* ").append(m.getTitle()).append(": ").append(inputTokensCnt).append(" Input + ").append(memoryTokenCnt).append(" Memory\n");
         });
         addChatBubble("Tokens", true, ChatPanel.COLOR.YELLOW).setText("Estimated Tokens:\n" + out);
         chatHistory.scrollToEnd();
     }
 
     private void actionSendMessage() {
-        var userMessage = chatInput.getValue();
+        chatInput.getElement().executeJs("return this.inputElement.value.substring(this.inputElement.selectionStart,this.inputElement.selectionEnd)").then(s -> {
+            actionSendMessage(s == null || s.getType() == JsonType.NULL || MString.isEmpty(s.asString()) ? chatInput.getValue() : s.asString());
+        });
+    }
+
+    private void actionSendMessage(String userMessage) {
         addChatBubble("You", true, ChatPanel.COLOR.BLUE).setText(userMessage);
         chatHistory.scrollToEnd();
-        chatInput.setValue("");
+        if (userMessage.equals(chatInput.getValue())) // not selected
+            chatInput.setValue("");
         chatInput.setReadOnly(true);
         ColorRotator colorRotator = new ColorRotator();
         UI ui = UI.getCurrent();
