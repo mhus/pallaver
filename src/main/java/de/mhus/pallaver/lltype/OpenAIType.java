@@ -1,14 +1,11 @@
 package de.mhus.pallaver.lltype;
 
 import de.mhus.commons.tools.MString;
-import de.mhus.pallaver.LLM;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.ollama.OllamaChatModel;
-import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModelName;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
@@ -31,7 +28,7 @@ public class OpenAIType implements LLType {
     private String defaultApiKey;
     @Getter
     private final String title = "OpenAI";
-    private final List<String> supportedFeatures = List.of(LLM.STREAM, LLM.TOOLS);
+    private final List<String> supportedFeatures = List.of(LLMFeatures.STREAM, LLMFeatures.TOOLS, LLMFeatures.STREAM_TOOLS);
 
     @Override
     public String getTitle() {

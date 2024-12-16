@@ -3,7 +3,6 @@ package de.mhus.pallaver.lltype;
 
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
-import de.mhus.pallaver.LLM;
 import de.mhus.pallaver.model.ModelOptions;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -32,7 +31,7 @@ public class OllamaType implements LLType {
     private String defaultApiKey;
     @Getter
     private final String title = "Ollama";
-    private final List<String> supportedFeatures = List.of(LLM.STREAM, LLM.TOOLS);
+    private final List<String> supportedFeatures = List.of(LLMFeatures.STREAM, LLMFeatures.TOOLS);
 
     @Override
     public String toString() {

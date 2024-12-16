@@ -4,7 +4,7 @@ import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.ChatAssistant;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.chat.ChatOptions;
-import de.mhus.pallaver.LLM;
+import de.mhus.pallaver.lltype.LLMFeatures;
 import de.mhus.pallaver.chat.StreamChatAssistant;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -72,7 +72,7 @@ public abstract class ModelControl {
             CompletableFuture<AiMessage> futureAiMessage = new CompletableFuture<>();
             StreamingResponseHandler<AiMessage> handler = createChatMessageHandler(futureAiMessage, otherBubble);
 
-            if (chatOptions.isUseTools() && modelService.supports(model, LLM.TOOLS)) {
+            if (chatOptions.isUseTools() && modelService.supports(model, LLMFeatures.TOOLS)) {
                 if (isStreamChatModel()) {
                     answerWithStreamChatAssistant(userMessage, handler);
                 } else {
@@ -103,9 +103,9 @@ public abstract class ModelControl {
                 ||
                 chatOptions.getMode() == ChatOptions.MODE.AUTO
                 &&
-                modelService.supports(model, LLM.STREAM) // if stream is supported and not tools
+                modelService.supports(model, LLMFeatures.STREAM) // if stream is supported and not tools
                 &&
-                (!chatOptions.isUseTools() || modelService.supports(model, LLM.STREAM_TOOLS)); // if tooling and stream tool is supported
+                (!chatOptions.isUseTools() || modelService.supports(model, LLMFeatures.STREAM_TOOLS)); // if tooling and stream tool is supported
     }
 
     public void answerWithChatModel(String userMessage, StreamingResponseHandler<AiMessage> handler) {
