@@ -21,6 +21,7 @@ import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import de.mhus.commons.io.CSVReader;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatModelControlFactory;
@@ -35,6 +36,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -86,8 +88,16 @@ public class ChatView extends VerticalLayout {
         var inputPromptMenu = new ContextMenu();
         inputPromptMenu.setOpenOnClick(true);
         inputPromptMenu.setTarget(inputPromptMenuBtn);
-        inputPromptMenu.addItem("Schmetterlinge", e -> chatInput.setValue("Was sind Schmetterlinge?"));
-
+        CSVReader reader = new CSVReader(new InputStreamReader(getClass().getResourceAsStream("/input-prompts.csv")));
+        try {
+            reader.readHeader(true);
+            while (reader.next()) {
+                var prompt = reader.get("prompt");
+                inputPromptMenu.addItem(reader.get("title"), e -> chatInput.setValue(prompt));
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error", e);
+        }
         var tokensCntBtn = new Button("Tokens", e -> actionEstimatedTokens());
 
         var btnLayout = new HorizontalLayout(sendBtn, inputPromptMenuBtn, tokensCntBtn);
