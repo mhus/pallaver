@@ -14,6 +14,7 @@ import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.mhus.commons.tools.MLang;
 import de.mhus.pallaver.lltype.UnknownType;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.lltype.LLType;
@@ -126,7 +127,7 @@ public class ModelsView extends VerticalLayout {
             modelTitle.setEnabled(true);
             modelType.setValue(typeList.stream().filter(i -> i.getName().equals(item.getType())).findFirst().orElseGet(() -> new UnknownType(item.getType()) ) );
             modelType.setEnabled(true);
-            modelModel.setValue(item.getModel());
+            MLang.tryThis(() -> modelModel.setValue(item.getModel())).orGet(() -> {modelModel.clear(); return null; } ); ;
             modelModel.setEnabled(true);
             modelUrl.setValue(item.getUrl());
             modelUrl.setEnabled(true);

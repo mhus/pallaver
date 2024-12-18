@@ -24,14 +24,14 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class DuckDuckGoWebAccessFactory implements ChatModelControlFactory {
+public class DuckDuckGoToolWebAccessFactory implements ChatModelControlFactory {
 
     @Autowired
     private ModelService modelService;
 
     @Override
     public String getTitle() {
-        return "DuckDuckGo Web Access";
+        return "DuckDuckGo as Tool Web Access";
     }
 
     @Override
@@ -57,29 +57,13 @@ public class DuckDuckGoWebAccessFactory implements ChatModelControlFactory {
         }
 
         public ChatAssistant createChatAssistant() {
-            EmbeddingModel embeddingModel = new BgeSmallEnV15QuantizedEmbeddingModel();
 
-            // Let's create our web search content retriever.
-            WebSearchEngine webSearchEngine = new DuckDuckGoWebsearchEngine();
-
-            ContentRetriever webSearchContentRetriever = WebSearchContentRetriever.builder()
-                    .webSearchEngine(new WebSearchEngineLogWrapper(webSearchEngine))
-                    .maxResults(5)
-                    .build();
-
-            // Let's create a query router that will route each query to both retrievers.
-            QueryRouter queryRouter = new DefaultQueryRouter(webSearchContentRetriever);
-
-            RetrievalAugmentor retrievalAugmentor = DefaultRetrievalAugmentor.builder()
-                    .queryRouter(queryRouter)
-                    .build();
-
+            var duckDuckGoSearchTool = new DuckDuckGoSearchTool();
             var webRequestTool = new WebRequestTool();
             return AiServices.builder(ChatAssistant.class)
                     .chatLanguageModel(getChatModel())
-                    .retrievalAugmentor(retrievalAugmentor)
                     .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
-                    .tools(webRequestTool)
+                    .tools(webRequestTool, duckDuckGoSearchTool)
                     .build();
         }
 

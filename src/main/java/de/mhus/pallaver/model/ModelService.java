@@ -2,6 +2,7 @@ package de.mhus.pallaver.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import de.mhus.commons.tools.MFile;
 import de.mhus.pallaver.lltype.LLType;
 import dev.langchain4j.model.Tokenizer;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.Arrays;
@@ -18,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -28,8 +31,8 @@ public class ModelService {
     @Autowired(required = false)
     private List<LLType> llType;
 
-    @Value("${pallaver.models:models.json}")
-    private String modelsFile;
+    @Value("${pallaver.configDirectory:config}")
+    private String configDirectory;
 
     final ObjectMapper mapper = new ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT);
@@ -40,23 +43,37 @@ public class ModelService {
     }
 
     public Collection<LLModel> getModels() {
-        Set<LLModel> models = new TreeSet<>(Comparator.comparing(LLModel::getTitle));
-        try (var inputStream = new FileInputStream(modelsFile)) {
-            models.addAll(Arrays.asList(mapper.createParser(inputStream)
-                    .readValuesAs(LLModel[].class).next()));
-            return Collections.unmodifiableSet(models);
-        } catch (Exception e) {
-            LOGGER.warn("Can't read models", e);
-            return Collections.emptyList();
-        }
+        final Set<LLModel> models = new TreeSet<>(Comparator.comparing(LLModel::getTitle));
+        Arrays.stream(Objects.requireNonNull(new File(configDirectory + "/models").listFiles(f -> f.getName().endsWith(".json")))).forEach(
+                modelFile -> {
+                    try (var inputStream = new FileInputStream(modelFile)) {
+                        models.add(mapper.createParser(inputStream).readValuesAs(LLModel.class).next() );
+                    } catch (Exception e) {
+                        LOGGER.warn("Can't read models", e);
+                    }
+                }
+            );
+
+        return Collections.unmodifiableSet(models);
     }
 
     public void setModels(Collection<LLModel> models) {
-        try (var outputStream = new FileOutputStream(modelsFile)) {
-            mapper.writeValue(outputStream, models);
-        } catch (Exception e) {
-            LOGGER.warn("Can't write models", e);
-        }
+        models.forEach(model -> {
+            var modelFile = new File(configDirectory + "/models/" + MFile.normalize(model.getTitle()) + ".json");
+            try (var outputStream = new FileOutputStream(modelFile)) {
+                mapper.writeValue(outputStream, model);
+            } catch (Exception e) {
+                LOGGER.warn("Can't write models", e);
+            }
+        });
+        Arrays.stream(Objects.requireNonNull(new File(configDirectory + "/models").listFiles(f -> f.getName().endsWith(".json")))).forEach(
+                modelFile -> {
+                    if (models.stream().noneMatch(m -> modelFile.getName().equals(MFile.normalize(m.getTitle()) + ".json"))) {
+                        modelFile.delete();
+                    }
+                }
+        );
+
     }
 
     private LLType getModelType(LLModel model) {

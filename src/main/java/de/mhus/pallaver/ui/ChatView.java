@@ -37,6 +37,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.EOFException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
@@ -93,9 +94,13 @@ public class ChatView extends VerticalLayout {
         try {
             reader.readHeader(true);
             while (reader.next()) {
+                if (reader.getCurrentLine().length == 0)
+                    continue;
                 var prompt = reader.get("prompt").replaceAll("\\\\n", "\n");
                 inputPromptMenu.addItem(reader.get("title"), e -> chatInput.setValue(prompt));
             }
+        } catch (EOFException e) {
+            LOGGER.debug("End of file /input-prompts.csv");
         } catch (Exception e) {
             LOGGER.error("Error", e);
         }

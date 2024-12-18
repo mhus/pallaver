@@ -27,12 +27,18 @@ public class DuckDuckGoWebsearchEngine implements WebSearchEngine  {
 
     @Override
     public WebSearchResults search(WebSearchRequest webSearchRequest) {
-        Document doc = null;
         List<WebSearchOrganicResult> webResults = new ArrayList<>(webSearchRequest.maxResults());
         try {
             var searchRequest = DUCKDUCKGO_SEARCH_URL +
                     URLEncoder.encode(webSearchRequest.searchTerms(), StandardCharsets.UTF_8);
-            doc = Jsoup.connect(searchRequest).get();
+            Document doc = Jsoup.connect(searchRequest)
+                    .userAgent("Mozilla/5.0 (Windows; U; WindowsNT 5.1; en-US; rv1.8.1.6) Gecko/20070725 Firefox/2.0.0.6")
+                    .referrer(DUCKDUCKGO_SEARCH_URL)
+                    .timeout(12000)
+                    .followRedirects(true)
+                    .ignoreContentType(true)
+                    .get();
+            LOGGER.info("Searching DuckDuckGo Request: {}\n Result: {}", searchRequest, doc);
             Elements results = doc.getElementById("links").getElementsByClass("results_links");
 
             for(Element result: results){

@@ -52,4 +52,4 @@ target
 /tsconfig.json
 /types.d.ts
 /vite.config.ts
-/models.json
+/config/models

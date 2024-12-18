@@ -100,4 +100,37 @@ public class OllamaType implements LLType {
         return new HuggingFaceTokenizer();
     }
 
+    public static void main(String[] args) {
+        var url = "http://localhost:11434";
+        var runningModels = OllamaModels.builder().baseUrl(url).build().runningModels();
+        System.out.println(runningModels);
+
+        var availableModels = OllamaModels.builder().baseUrl(url).build().availableModels();
+        System.out.println(availableModels);
+
+        availableModels.content().forEach(
+                model -> {
+                    System.out.println("---");
+                    System.out.println("Model: " + model.getName());
+                    var card = OllamaModels.builder().baseUrl(url).build().modelCard(model.getName()).content();
+                    //System.out.println("License: " + card.getLicense());
+                    //System.out.println("Modelfile: " + card.getModelfile());
+                    System.out.println("Parameters: " + card.getParameters());
+                    System.out.println("Modified At: " + card.getModifiedAt());
+                    System.out.println("Template: " + card.getTemplate());
+                    var details = card.getDetails();
+                    if (details != null) {
+                        System.out.println("getFormat: " + details.getFormat());
+                        System.out.println("getFamily: " + details.getFamily());
+                        System.out.println("getFamilies: " + details.getFamilies());
+                        System.out.println("getParameterSize: " + details.getParameterSize());
+                        System.out.println("getQuantizationLevel: " + details.getQuantizationLevel());
+                    }
+                }
+        );
+
+    }
+    public void x() {
+    }
+
 }
