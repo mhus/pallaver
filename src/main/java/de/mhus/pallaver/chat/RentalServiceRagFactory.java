@@ -93,7 +93,7 @@ public class RentalServiceRagFactory implements ChatModelControlFactory {
                     .build();
 
             return AiServices.builder(ChatAssistant.class)
-                    .chatLanguageModel(getChatModel())
+                    .chatModel(getChatModel())
                     .retrievalAugmentor(new RetrievalAugmentorLogWrapper(retrievalAugmentor))
                     .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                     .build();

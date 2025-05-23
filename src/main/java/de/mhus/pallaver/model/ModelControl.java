@@ -13,9 +13,11 @@ import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.memory.chat.TokenWindowChatMemory;
 import dev.langchain4j.model.StreamingResponseHandler;
-import dev.langchain4j.model.Tokenizer;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.output.Response;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
@@ -35,9 +37,9 @@ public abstract class ModelControl {
     @Getter
     volatile boolean enabled = false;
     @Getter
-    private StreamingChatLanguageModel streamChatModel;
+    private StreamingChatModel streamChatModel;
     @Getter
-    private ChatLanguageModel chatModel;
+    private ChatModel chatModel;
     @Getter
     private ChatMemory chatMemory;
     @Setter
@@ -48,7 +50,7 @@ public abstract class ModelControl {
     @Getter
     private Exception exception;
     @Getter
-    private Tokenizer tokenizer;
+    private TokenCountEstimator tokenizer;
 
     public ModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions) {
         this.model = model;
@@ -70,7 +72,7 @@ public abstract class ModelControl {
 
             addToChatMemory(userMessage);
             CompletableFuture<AiMessage> futureAiMessage = new CompletableFuture<>();
-            StreamingResponseHandler<AiMessage> handler = createChatMessageHandler(futureAiMessage, otherBubble);
+            StreamingChatResponseHandler handler = createChatMessageHandler(futureAiMessage, otherBubble);
 
             if (chatOptions.isUseTools() && modelService.supports(model, LLMFeatures.TOOLS)) {
                 if (isStreamChatModel()) {
@@ -108,40 +110,40 @@ public abstract class ModelControl {
                 (!chatOptions.isUseTools() || modelService.supports(model, LLMFeatures.STREAM_TOOLS)); // if tooling and stream tool is supported
     }
 
-    public void answerWithChatModel(String userMessage, StreamingResponseHandler<AiMessage> handler) {
-        var answer = chatModel.generate(chatMemory.messages());
-        handler.onNext(answer.content().text());
-        handler.onComplete(answer);
+    public void answerWithChatModel(String userMessage, StreamingChatResponseHandler handler) {
+        var answer = chatModel.chat(chatMemory.messages());
+        handler.onPartialResponse(answer.aiMessage().text());
+        handler.onCompleteResponse(answer);
     }
 
-    public void answerWithStreamChatModel(String userMessage, StreamingResponseHandler<AiMessage> handler) {
-        streamChatModel.generate(chatMemory.messages(), handler);
+    public void answerWithStreamChatModel(String userMessage, StreamingChatResponseHandler handler) {
+        streamChatModel.chat(chatMemory.messages(), handler);
     }
 
-    public void answerWithChatAssistant(String userMessage, StreamingResponseHandler<AiMessage> handler) {
+    public void answerWithChatAssistant(String userMessage, StreamingChatResponseHandler handler) {
         String answer = chatAssistant.generate(userMessage);
-        handler.onNext(answer);
-        handler.onComplete(Response.from(AiMessage.from(answer)));
+        handler.onPartialResponse(answer);
+        handler.onCompleteResponse(ChatResponse.builder().aiMessage(AiMessage.from(answer)).build());
     }
 
-    public void answerWithStreamChatAssistant(String userMessage, StreamingResponseHandler<AiMessage> handler) {
+    public void answerWithStreamChatAssistant(String userMessage, StreamingChatResponseHandler handler) {
         TokenStream tokenStream = streamChatAssistant.generate(chatMemory.messages());
-        tokenStream.onNext(handler::onNext);
-        tokenStream.onComplete(handler::onComplete);
+        tokenStream.onPartialResponse(handler::onPartialResponse);
+        tokenStream.onCompleteResponse(handler::onCompleteResponse);
         tokenStream.onError(handler::onError);
         tokenStream.start();
     }
 
-    private StreamingResponseHandler<AiMessage> createChatMessageHandler(CompletableFuture<AiMessage> futureAiMessage, Bubble otherBubble) {
-        return new StreamingResponseHandler<AiMessage>() {
+    private StreamingChatResponseHandler createChatMessageHandler(CompletableFuture<AiMessage> futureAiMessage, Bubble otherBubble) {
+        return new StreamingChatResponseHandler() {
             @Override
-            public void onNext(String token) {
+            public void onPartialResponse(String token) {
                 otherBubble.appendText(token);
             }
 
             @Override
-            public void onComplete(Response<AiMessage> response) {
-                futureAiMessage.complete(response.content());
+            public void onCompleteResponse(ChatResponse response) {
+                futureAiMessage.complete(response.aiMessage());
                 otherBubble.onComplete();
             }
 
@@ -184,11 +186,11 @@ public abstract class ModelControl {
         }
     }
 
-    public ChatLanguageModel createChatModel() {
+    public ChatModel createChatModel() {
         return modelService.createChatModel(model, chatOptions.getModelOptions());
     }
 
-    public StreamingChatLanguageModel createStreamChatModel() {
+    public StreamingChatModel createStreamChatModel() {
         return modelService.createStreamingChatModel(model, chatOptions.getModelOptions());
     }
 
@@ -199,7 +201,7 @@ public abstract class ModelControl {
 
     public ChatAssistant createChatAssistant() {
         return AiServices.builder(ChatAssistant.class)
-                .chatLanguageModel(chatModel)
+                .chatModel(chatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(chatOptions.getMaxMessages()))
                 .tools(createTools())
                 .build();
@@ -207,7 +209,7 @@ public abstract class ModelControl {
 
     public StreamChatAssistant createStreamChatAssistant() {
         return AiServices.builder(StreamChatAssistant.class)
-                .streamingChatLanguageModel(streamChatModel)
+                .streamingChatModel(streamChatModel)
                 .chatMemory(MessageWindowChatMemory.withMaxMessages(chatOptions.getMaxMessages()))
                 .tools(createTools())
                 .build();

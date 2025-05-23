@@ -4,10 +4,10 @@ package de.mhus.pallaver.lltype;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelOptions;
-import dev.langchain4j.model.Tokenizer;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenCountEstimator;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
 import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
@@ -19,7 +19,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+//@Service
 public class OllamaType implements LLType {
 
     @Getter
@@ -44,7 +44,7 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
+    public StreamingChatModel createStreamingChatModel(LLModel model, ModelOptions options) {
         var builder = OllamaStreamingChatModel.builder();
         builder.baseUrl(model.getUrl());
         builder.modelName(model.getModel());
@@ -68,13 +68,13 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
+    public ChatModel createChatModel(LLModel model, ModelOptions options) {
         var builder = OllamaChatModel.builder();
         builder.baseUrl(model.getUrl());
         builder.modelName(model.getModel());
         builder.temperature(options.getTemperature());
-        if (MString.isSet(options.getFormat()))
-            builder.format(options.getFormat());
+//        if (MString.isSet(options.getFormat()))
+//            builder.format(options.getFormat());
         if (options.getSeed() != null)
             builder.seed(options.getSeed());
         if (options.getTimeoutInSeconds() != null)
@@ -96,8 +96,8 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public Tokenizer createTokenizer(LLModel model) {
-        return new HuggingFaceTokenizer();
+    public TokenCountEstimator createTokenizer(LLModel model) {
+        return new HuggingFaceTokenCountEstimator();
     }
 
     public static void main(String[] args) {

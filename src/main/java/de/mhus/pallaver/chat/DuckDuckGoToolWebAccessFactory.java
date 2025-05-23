@@ -61,7 +61,7 @@ public class DuckDuckGoToolWebAccessFactory implements ChatModelControlFactory {
             var duckDuckGoSearchTool = new DuckDuckGoSearchTool();
             var webRequestTool = new WebRequestTool();
             return AiServices.builder(ChatAssistant.class)
-                    .chatLanguageModel(getChatModel())
+                    .chatModel(getChatModel())
                     .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                     .tools(webRequestTool, duckDuckGoSearchTool)
                     .build();

@@ -103,7 +103,7 @@ public class WebSearchCheck implements QualityCheck {
                     .build();
 
             AiServices.builder(ChatAssistant.class)
-                    .chatLanguageModel(control.getChatModel())
+                    .chatModel(control.getChatModel())
                     .retrievalAugmentor(retrievalAugmentor)
                     .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                     .build();

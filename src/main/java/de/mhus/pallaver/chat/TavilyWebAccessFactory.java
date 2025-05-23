@@ -79,7 +79,7 @@ public class TavilyWebAccessFactory implements ChatModelControlFactory {
                     .build();
 
             return AiServices.builder(ChatAssistant.class)
-                    .chatLanguageModel(getChatModel())
+                    .chatModel(getChatModel())
                     .retrievalAugmentor(retrievalAugmentor)
                     .chatMemory(MessageWindowChatMemory.withMaxMessages(10))
                     .build();

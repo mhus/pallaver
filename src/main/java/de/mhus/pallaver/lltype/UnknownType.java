@@ -2,9 +2,9 @@ package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelOptions;
-import dev.langchain4j.model.Tokenizer;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 
 import java.util.List;
 
@@ -31,12 +31,12 @@ public class UnknownType implements LLType {
     }
 
     @Override
-    public Tokenizer createTokenizer(LLModel model) {
+    public TokenCountEstimator createTokenizer(LLModel model) {
         throw new RuntimeException("Unknown type");
     }
 
     @Override
-    public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
+    public StreamingChatModel createStreamingChatModel(LLModel model, ModelOptions options) {
         throw new RuntimeException("Unknown type");
     }
 
@@ -46,7 +46,7 @@ public class UnknownType implements LLType {
     }
 
     @Override
-    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
+    public ChatModel createChatModel(LLModel model, ModelOptions options) {
         throw new RuntimeException("Unknown type");
     }
 

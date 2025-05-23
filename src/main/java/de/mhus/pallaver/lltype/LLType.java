@@ -2,9 +2,9 @@ package de.mhus.pallaver.lltype;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelOptions;
-import dev.langchain4j.model.Tokenizer;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 
 import java.util.List;
 
@@ -19,11 +19,11 @@ public interface LLType {
 
     List<LLModel> getDefaultModels();
 
-    Tokenizer createTokenizer(LLModel model);
+    TokenCountEstimator createTokenizer(LLModel model);
 
-    StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options);
+    StreamingChatModel createStreamingChatModel(LLModel model, ModelOptions options);
 
     boolean supports(LLModel model, String feature);
 
-    ChatLanguageModel createChatModel(LLModel model, ModelOptions options);
+    ChatModel createChatModel(LLModel model, ModelOptions options);
 }
