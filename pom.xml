@@ -126,8 +126,8 @@
 
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-code-execution-engine-judge0</artifactId>
-            <version>${langchain4j.version}</version>
+            <artifactId>langchain4j-google-ai-gemini</artifactId>
+            <version>1.0.1-beta6</version>
         </dependency>
 
         <dependency>
