@@ -1,4 +1,87 @@
 package de.mhus.pallaver.lltype;
 
-public class GeminiType {
+import de.mhus.pallaver.model.LLModel;
+import de.mhus.pallaver.model.ModelOptions;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
+import dev.langchain4j.model.googleai.GoogleAiGeminiTokenCountEstimator;
+import dev.langchain4j.model.openai.OpenAiChatModelName;
+import lombok.Getter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+@Service
+public class GeminiType implements LLType {
+
+    @Getter
+    private final String name = "gemini";
+    @Value("${pallaver.gemini.apiKey:}")
+    private String defaultApiKey;
+    @Getter
+    private final String title = "Gemini";
+    private final List<String> supportedFeatures = List.of(LLMFeatures.STREAM, LLMFeatures.TOOLS, LLMFeatures.STREAM_TOOLS);
+
+    private final String[] SUPPORTED_MODELS = {
+            "gemini-1.5-flash",
+            "gemini-1.5",
+            "gemini-1.5-chat",
+            "gemini-1.5-chat-bison",
+            "gemini-1.5-chat-bison-v2",
+            "gemini-1.5-chat-bison-v2-001"
+    };
+
+
+    @Override
+    public List<LLModel> getDefaultModels() {
+        var models = new ArrayList<LLModel>();
+        Arrays.stream(SUPPORTED_MODELS).forEach(model -> models.add(new LLModel(getTitle() + " " + model, getName(), false, "", model, defaultApiKey)));
+        return models;
+    }
+
+    @Override
+    public TokenCountEstimator createTokenCountEstimator(LLModel model) {
+        return GoogleAiGeminiTokenCountEstimator
+                .builder()
+                .apiKey(model.getApiKey())
+                .modelName(model.getModel())
+                .logRequestsAndResponses(true)
+                .build();
+    }
+
+    @Override
+    public boolean supports(LLModel model, String feature) {
+        return supportedFeatures.contains(feature);
+    }
+
+    @Override
+    public XChatModel createChatModel(LLModel model, ModelOptions options, boolean streaming) {
+        if (streaming) {
+            return new XChatModel(GoogleAiGeminiStreamingChatModel
+                    .builder()
+                    .apiKey(model.getApiKey())
+                    .modelName(model.getModel())
+                    .temperature(options.getTemperature())
+                    //.topP(options.getTopP())
+                    //.maxTokens(options.getMaxTokens())
+                    //.frequencyPenalty(options.getFrequencyPenalty())
+                    //.presencePenalty(options.getPresencePenalty())
+                    .build());
+        }
+        return new XChatModel(GoogleAiGeminiChatModel
+                .builder()
+                .apiKey(model.getApiKey())
+                .modelName(model.getModel())
+                .temperature(options.getTemperature())
+                //.topP(options.getTopP())
+                //.maxTokens(options.getMaxTokens())
+                //.frequencyPenalty(options.getFrequencyPenalty())
+                //.presencePenalty(options.getPresencePenalty())
+                .build());
+    }
 }

@@ -4,22 +4,19 @@ package de.mhus.pallaver.lltype;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelOptions;
-import dev.langchain4j.model.Tokenizer;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenizer;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenCountEstimator;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
-import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-@Service
+//@Service
 public class OllamaType implements LLType {
 
     @Getter
@@ -44,37 +41,31 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
-        var builder = OllamaStreamingChatModel.builder();
-        builder.baseUrl(model.getUrl());
-        builder.modelName(model.getModel());
-        builder.temperature(options.getTemperature());
-        if (MString.isSet(options.getFormat()))
-            builder.format(options.getFormat());
-        if (options.getSeed() != null)
-            builder.seed(options.getSeed());
-        if (options.getTimeoutInSeconds() != null)
-            builder.timeout(Duration.ofSeconds(options.getTimeoutInSeconds()));
-
-        if (options.isLogging())
-            builder.logRequests(true).logResponses(true);
-
-        return builder.build();
-    }
-
-    @Override
     public boolean supports(LLModel model, String feature) {
         return supportedFeatures.contains(feature);
     }
 
     @Override
-    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
+    public XChatModel createChatModel(LLModel model, ModelOptions options, boolean streaming) {
+        if (streaming) {
+            var builder = OllamaChatModel.builder();
+            builder.baseUrl(model.getUrl());
+            builder.modelName(model.getModel());
+            builder.temperature(options.getTemperature());
+            if (options.getSeed() != null)
+                builder.seed(options.getSeed());
+            if (options.getTimeoutInSeconds() != null)
+                builder.timeout(Duration.ofSeconds(options.getTimeoutInSeconds()));
+
+            if (options.isLogging())
+                builder.logRequests(true).logResponses(true);
+
+            return new XChatModel(builder.build());
+        }
         var builder = OllamaChatModel.builder();
         builder.baseUrl(model.getUrl());
         builder.modelName(model.getModel());
         builder.temperature(options.getTemperature());
-        if (MString.isSet(options.getFormat()))
-            builder.format(options.getFormat());
         if (options.getSeed() != null)
             builder.seed(options.getSeed());
         if (options.getTimeoutInSeconds() != null)
@@ -83,7 +74,7 @@ public class OllamaType implements LLType {
         if (options.isLogging())
             builder.logRequests(true).logResponses(true);
 
-        return builder.build();
+        return new XChatModel(builder.build());
     }
 
     @Override
@@ -96,8 +87,8 @@ public class OllamaType implements LLType {
     }
 
     @Override
-    public Tokenizer createTokenizer(LLModel model) {
-        return new HuggingFaceTokenizer();
+    public TokenCountEstimator createTokenCountEstimator(LLModel model) {
+        return new HuggingFaceTokenCountEstimator();
     }
 
     public static void main(String[] args) {

@@ -29,12 +29,13 @@ public class RetrievalAugmentorLogWrapper implements RetrievalAugmentor {
         return result;
     }
 
-    @Override
-    public UserMessage augment(UserMessage userMessage, Metadata metadata) {
-        var result = retrievalAugmentor.augment(userMessage, metadata);
-        if (result != null) {
-            LOGGER.info("Augmented: {}", result);
-        }
-        return result;
-    }
+//    @Override
+//    public UserMessage augment(UserMessage userMessage, Metadata metadata) {
+//        var result = retrievalAugmentor.augment(userMessage, metadata);
+//        if (result != null) {
+//            LOGGER.info("Augmented: {}", result);
+//        }
+//        return result;
+//    }
+
 }

@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.mhus.commons.tools.MFile;
 import de.mhus.pallaver.lltype.LLType;
-import dev.langchain4j.model.Tokenizer;
-import dev.langchain4j.model.chat.ChatLanguageModel;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import de.mhus.pallaver.lltype.XChatModel;
+import dev.langchain4j.model.TokenCountEstimator;
+import dev.langchain4j.model.chat.ChatModel;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,14 +81,9 @@ public class ModelService {
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("Unknown type: " + model.getType()));
     }
 
-    public Tokenizer createTokenizer(LLModel model) {
+    public TokenCountEstimator createTokenizer(LLModel model) {
         var type = getModelType(model);
-        return type.createTokenizer(model);
-    }
-
-    public StreamingChatLanguageModel createStreamingChatModel(LLModel model, ModelOptions options) {
-        var type = getModelType(model);
-        return type.createStreamingChatModel(model, options);
+        return type.createTokenCountEstimator(model);
     }
 
     public boolean supports(LLModel model, String feature) {
@@ -96,8 +91,8 @@ public class ModelService {
         return type.supports(model, feature);
     }
 
-    public ChatLanguageModel createChatModel(LLModel model, ModelOptions options) {
+    public XChatModel createChatModel(LLModel model, ModelOptions options, boolean streaming) {
         var type = getModelType(model);
-        return type.createChatModel(model, options);
+        return type.createChatModel(model, options, streaming);
     }
 }

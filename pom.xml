@@ -23,7 +23,7 @@
         <sonar.organization>mhus</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <mhus-common.version>8.2.0-SNAPSHOT</mhus-common.version>
-        <langchain4j.version>0.36.2</langchain4j.version>
+        <langchain4j.version>1.0.1-beta6</langchain4j.version>
     </properties>
 
     <inceptionYear>2024</inceptionYear>
@@ -106,7 +106,7 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
@@ -116,11 +116,16 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-open-ai</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>1.0.1</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-embeddings-all-minilm-l6-v2</artifactId>
+            <version>${langchain4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-google-ai-gemini</artifactId>
             <version>${langchain4j.version}</version>
         </dependency>
 
