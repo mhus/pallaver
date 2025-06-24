@@ -2,6 +2,7 @@ package de.mhus.pallaver.generator;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.model.SingleModelControl;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.model.ModelControl;
@@ -26,7 +27,7 @@ public class SimpleGenerator implements  Generator {
       var options = new ChatOptions();
       options.getModelOptions().setTemperature(1);
 
-      var control = new ModelControl(model, modelService, options) {
+      var control = new SingleModelControl(model, modelService, options) {
           @Override
           protected Bubble addChatBubble(String title) {
               return monitor.createResultBubble(title);

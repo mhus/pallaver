@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.quality;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.contextmenu.MenuItem;
@@ -14,8 +14,10 @@ import com.vaadin.flow.router.Route;
 import de.mhus.pallaver.generator.BubbleMonitor;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
-import de.mhus.pallaver.quality.QualityCheck;
-import de.mhus.pallaver.quality.QualityCheckMonitor;
+import de.mhus.pallaver.ui.ChatBubble;
+import de.mhus.pallaver.ui.ChatHistoryPanel;
+import de.mhus.pallaver.ui.ColorRotator;
+import de.mhus.pallaver.ui.MainLayout;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -33,7 +35,7 @@ public class QualityChecksView extends VerticalLayout {
 
     @Autowired
     private ModelService modelService;
-    private ChatPanel chatHistory;
+    private ChatHistoryPanel chatHistory;
     private Span infoText;
     private final List<MyModelItem> models = new ArrayList<>();
     @Autowired(required = false)
@@ -51,7 +53,7 @@ public class QualityChecksView extends VerticalLayout {
         checkListLayout.add(checkList);
 
         infoText = new Span("");
-        chatHistory = new ChatPanel();
+        chatHistory = new ChatHistoryPanel();
         chatHistory.setSizeFull();
 
         var splitLayout = new SplitLayout(checkListLayout, chatHistory);
@@ -102,7 +104,7 @@ public class QualityChecksView extends VerticalLayout {
         Thread.startVirtualThread(() -> {
             checkList.getSelectedItems().forEach(c -> {
                 ui.access(() -> {
-                    var resultBubble = chatHistory.addBubble(c.name(), true, ChatPanel.COLOR.BLUE);
+                    var resultBubble = chatHistory.addBubble(c.name(), true, ChatHistoryPanel.COLOR.BLUE);
                     actionRun(resultBubble, ui, c);
                 });
             });
@@ -126,7 +128,7 @@ public class QualityChecksView extends VerticalLayout {
         });
     }
 
-    private CompletableFuture<QualityCheckMonitor> actionRun(UI ui, Check c, MyModelItem m, ChatPanel.COLOR color) {
+    private CompletableFuture<QualityCheckMonitor> actionRun(UI ui, Check c, MyModelItem m, ChatHistoryPanel.COLOR color) {
         var monitor = new BubbleMonitor(ui, m.getTitle() ,color);
         ui.access(() -> chatHistory.addBubble(monitor));
         var future = new CompletableFuture<QualityCheckMonitor>();
@@ -159,7 +161,7 @@ public class QualityChecksView extends VerticalLayout {
         private boolean enabled;
         MenuItem item;
         @Setter
-        private ChatPanel.COLOR color = ChatPanel.COLOR.GREEN;
+        private ChatHistoryPanel.COLOR color = ChatHistoryPanel.COLOR.GREEN;
 
         public MyModelItem(LLModel model, MenuItem item) {
             this.model = model;

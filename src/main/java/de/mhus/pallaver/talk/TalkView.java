@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.talk;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.KeyModifier;
@@ -8,7 +8,6 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.contextmenu.ContextMenu;
 import com.vaadin.flow.component.contextmenu.MenuItem;
-import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -24,12 +23,16 @@ import com.vaadin.flow.router.Route;
 import de.mhus.commons.io.CSVReader;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.BubbleFactory;
-import de.mhus.pallaver.chat.ChatModelControlFactory;
 import de.mhus.pallaver.chat.ChatOptions;
-import de.mhus.pallaver.chat.DefaultFactory;
+import de.mhus.pallaver.chat.DefaultChatFactory;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.ui.Bubble;
+import de.mhus.pallaver.ui.ChatBubble;
+import de.mhus.pallaver.ui.ChatHistoryPanel;
+import de.mhus.pallaver.ui.ColorRotator;
+import de.mhus.pallaver.ui.MainLayout;
 import dev.langchain4j.data.message.UserMessage;
 import elemental.json.JsonType;
 import jakarta.annotation.PostConstruct;
@@ -43,29 +46,28 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Route(value = "chat", layout = MainLayout.class)
-@PageTitle("Chat")
-public class ChatView extends VerticalLayout {
+@Route(value = "talk", layout = MainLayout.class)
+@PageTitle("Talk")
+public class TalkView extends VerticalLayout {
 
     @Autowired
     private ModelService modelService;
-    private ChatPanel chatHistory;
+    private ChatHistoryPanel chatHistory;
     private TextArea chatInput;
     private Span infoText;
     private List<ModelItem> models = new ArrayList<>();
-    private ChatOptions chatOptions = new ChatOptions();
     @Autowired
-    private List<ChatModelControlFactory> controlFactories;
+    private List<TalkControlFactory> controlFactories;
     @Autowired
-    private DefaultFactory defaultModelControlFactory;
-    private ChatModelControlFactory selectedModelControlFactory;
+    private DefaultTalkFactory defaultModelControlFactory;
+    private TalkControlFactory selectedModelControlFactory;
 
     @PostConstruct
     public void init() {
         selectedModelControlFactory = defaultModelControlFactory;
         var menuBar = createMenuBar();
         infoText = new Span("");
-        chatHistory = new ChatPanel();
+        chatHistory = new ChatHistoryPanel();
         chatHistory.setSizeFull();
         chatInput = new TextArea();
         chatInput.setSizeFull();
@@ -104,9 +106,8 @@ public class ChatView extends VerticalLayout {
         } catch (Exception e) {
             LOGGER.error("Error", e);
         }
-        var tokensCntBtn = new Button("Tokens", e -> actionEstimatedTokens());
 
-        var btnLayout = new HorizontalLayout(sendBtn, inputPromptMenuBtn, tokensCntBtn);
+        var btnLayout = new HorizontalLayout(sendBtn, inputPromptMenuBtn);
         btnLayout.setWidthFull();
         btnLayout.setMargin(false);
         btnLayout.setPadding(false);
@@ -121,24 +122,6 @@ public class ChatView extends VerticalLayout {
         updateModelText();
     }
 
-    private void actionEstimatedTokens() {
-        var userMessage = chatInput.getValue();
-        var out = new StringBuilder();
-        models.stream().filter(ModelItem::isEnabled).forEach(m -> {
-            var tokenizer = modelService.createTokenizer(m.getModel());
-            var inputTokensCnt = MString.isEmpty(userMessage) ? 0 : tokenizer.estimateTokenCountInMessage(UserMessage.from(userMessage));
-            LOGGER.info("Model {}:", m.getTitle());
-            var memoryTokenCnt = m.getControl().getChatMemory().messages().stream().mapToInt(chatMessage -> {
-                var t = tokenizer.estimateTokenCountInMessage(chatMessage);
-                LOGGER.info("Model {} memory message {}: {}", m.getTitle(), t, chatMessage);
-                return t;
-            }).sum();
-            out.append("* ").append(m.getTitle()).append(": ").append(inputTokensCnt).append(" Input + ").append(memoryTokenCnt).append(" Memory\n");
-        });
-        addChatBubble("Tokens", true, ChatPanel.COLOR.YELLOW).setText("Estimated Tokens:\n" + out);
-        chatHistory.scrollToEnd();
-    }
-
     private void actionSendMessage() {
         chatInput.getElement().executeJs("return this.inputElement.value.substring(this.inputElement.selectionStart,this.inputElement.selectionEnd)").then(s -> {
             actionSendMessage(s == null || s.getType() == JsonType.NULL || MString.isEmpty(s.asString()) ? chatInput.getValue() : s.asString());
@@ -146,7 +129,7 @@ public class ChatView extends VerticalLayout {
     }
 
     private void actionSendMessage(String userMessage) {
-        addChatBubble("You", true, ChatPanel.COLOR.BLUE).setText(userMessage);
+        addChatBubble("You", true, ChatHistoryPanel.COLOR.BLUE).setText(userMessage);
         chatHistory.scrollToEnd();
         if (userMessage.equals(chatInput.getValue())) // not selected
             chatInput.setValue("");
@@ -166,7 +149,7 @@ public class ChatView extends VerticalLayout {
         });
     }
 
-    private ChatBubble addChatBubble(String person, boolean left, ChatPanel.COLOR color) {
+    private ChatBubble addChatBubble(String person, boolean left, ChatHistoryPanel.COLOR color) {
         return chatHistory.addBubble(person, left, color);
     }
 
@@ -180,7 +163,6 @@ public class ChatView extends VerticalLayout {
             item.setChecked(false);
             models.add(new ModelItem(model, item));
         });
-        menuBar.addItem("Options", e -> actionShowOptions());
 
         var menuControl = menuBar.addItem("Control").getSubMenu();
         controlFactories.forEach(factory -> {
@@ -206,22 +188,6 @@ public class ChatView extends VerticalLayout {
 //    private void actionSelectPrompt(String title, String url) {
 //
 //    }
-
-    private void actionShowOptions() {
-        var dialog = new Dialog();
-        dialog.setCloseOnEsc(true);
-        dialog.setCloseOnOutsideClick(true);
-        var optionsClone = chatOptions.toBuilder().build();
-        dialog.add(createOptionsForm(optionsClone));
-        dialog.setHeaderTitle("Chat Options");
-        dialog.getFooter().add(new Button("Cancel", e -> dialog.close()));
-        dialog.getFooter().add(new Button("Save", e -> {
-            dialog.close();
-            chatOptions = optionsClone;
-            actionReset();
-        }));
-        dialog.open();
-    }
 
     private FormLayout createOptionsForm(ChatOptions options) {
         var formLayout = new FormLayout();
@@ -279,9 +245,6 @@ public class ChatView extends VerticalLayout {
         updateModelText();
         chatHistory.clear();
         chatInput.setValue("");
-        if (MString.isSet(chatOptions.getPrompt())) {
-            addChatBubble("Prompt", true, ChatPanel.COLOR.YELLOW).appendText(chatOptions.getPrompt());
-        }
     }
 
     private void updateModelText() {
@@ -321,9 +284,9 @@ public class ChatView extends VerticalLayout {
             return model.getTitle();
         }
 
-        public void answer(String userMessage, ChatPanel.COLOR color, UI ui) {
+        public void answer(String userMessage, ChatHistoryPanel.COLOR color, UI ui) {
             if (control == null) {
-                control = selectedModelControlFactory.createModelControl(model, chatOptions, new ChatViewBubbleFactory(color, ui));
+                control = selectedModelControlFactory.createModelControl(model, new ChatViewBubbleFactory(color, ui));
             }
             control.answer(userMessage);
         }
@@ -332,10 +295,10 @@ public class ChatView extends VerticalLayout {
 
     private class ChatViewBubbleFactory implements BubbleFactory {
 
-        private final ChatPanel.COLOR color;
+        private final ChatHistoryPanel.COLOR color;
         private final UI ui;
 
-        ChatViewBubbleFactory(ChatPanel.COLOR color, UI ui) {
+        ChatViewBubbleFactory(ChatHistoryPanel.COLOR color, UI ui) {
             this.color = color;
             this.ui = ui;
         }

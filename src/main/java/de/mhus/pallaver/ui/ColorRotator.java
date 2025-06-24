@@ -2,15 +2,15 @@ package de.mhus.pallaver.ui;
 
 public class ColorRotator {
     private int index = 0;
-    private ChatPanel.COLOR[] colors;
+    private ChatHistoryPanel.COLOR[] colors;
 
-    public ColorRotator(ChatPanel.COLOR ... colors) {
-        if (colors == null || colors.length == 0) colors = new ChatPanel.COLOR[] { ChatPanel.COLOR.GREEN, ChatPanel.COLOR.RED, ChatPanel.COLOR.YELLOW };
+    public ColorRotator(ChatHistoryPanel.COLOR ... colors) {
+        if (colors == null || colors.length == 0) colors = new ChatHistoryPanel.COLOR[] { ChatHistoryPanel.COLOR.GREEN, ChatHistoryPanel.COLOR.RED, ChatHistoryPanel.COLOR.YELLOW };
         this.colors = colors;
     }
 
-    public ChatPanel.COLOR next() {
-        ChatPanel.COLOR out = colors[index];
+    public ChatHistoryPanel.COLOR next() {
+        ChatHistoryPanel.COLOR out = colors[index];
         index++;
         if (index >= colors.length) index = 0;
         return out;

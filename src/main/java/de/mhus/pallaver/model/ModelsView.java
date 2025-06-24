@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.model;
 
 import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -16,9 +16,8 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import de.mhus.commons.tools.MLang;
 import de.mhus.pallaver.lltype.UnknownType;
-import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.lltype.LLType;
-import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.ui.MainLayout;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 

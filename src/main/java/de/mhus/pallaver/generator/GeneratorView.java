@@ -1,4 +1,4 @@
-package de.mhus.pallaver.ui;
+package de.mhus.pallaver.generator;
 
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.contextmenu.MenuItem;
@@ -12,11 +12,10 @@ import com.vaadin.flow.component.splitlayout.SplitLayout;
 import com.vaadin.flow.data.provider.ListDataProvider;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import de.mhus.pallaver.generator.Generator;
-import de.mhus.pallaver.generator.GeneratorMonitor;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
-import de.mhus.pallaver.wrapper.EmbeddingStoreLogWrapper;
+import de.mhus.pallaver.ui.ChatHistoryPanel;
+import de.mhus.pallaver.ui.MainLayout;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,7 +33,7 @@ public class GeneratorView extends VerticalLayout {
     private MyModelItem selectedModelItem;
     @Autowired
     private ModelService modelService;
-    private ChatPanel chatHistory;
+    private ChatHistoryPanel chatHistory;
     private Span infoText;
     @Autowired(required = false)
     private List<Generator> generators;
@@ -52,7 +51,7 @@ public class GeneratorView extends VerticalLayout {
         generatorListLayout.add(generatorList);
 
         infoText = new Span("");
-        chatHistory = new ChatPanel();
+        chatHistory = new ChatHistoryPanel();
         chatHistory.setSizeFull();
 
         var splitLayout = new SplitLayout(generatorListLayout, chatHistory);
@@ -97,13 +96,13 @@ public class GeneratorView extends VerticalLayout {
         chatHistory.clear();
         UI ui = UI.getCurrent();
         if (selectedModelItem == null) {
-            chatHistory.addBubble("No model selected", true, ChatPanel.COLOR.RED);
+            chatHistory.addBubble("No model selected", true, ChatHistoryPanel.COLOR.RED);
             return;
         }
         var model = selectedModelItem.getModel();
         var generator = generatorList.getValue().generator();
 
-        chatHistory.addBubble(model.getTitle() + " - " + generator.getTitle(), true, ChatPanel.COLOR.BLUE);
+        chatHistory.addBubble(model.getTitle() + " - " + generator.getTitle(), true, ChatHistoryPanel.COLOR.BLUE);
 
         Thread.startVirtualThread(() -> {
             actionRun(ui, model, generator);
@@ -136,7 +135,7 @@ public class GeneratorView extends VerticalLayout {
         private final LLModel model;
         MenuItem item;
         @Setter
-        private ChatPanel.COLOR color = ChatPanel.COLOR.GREEN;
+        private ChatHistoryPanel.COLOR color = ChatHistoryPanel.COLOR.GREEN;
 
         public MyModelItem(LLModel model, MenuItem item) {
             this.model = model;

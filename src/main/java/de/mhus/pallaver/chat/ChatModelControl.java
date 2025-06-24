@@ -2,10 +2,11 @@ package de.mhus.pallaver.chat;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.model.SingleModelControl;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.model.ModelControl;
 
-public class ChatModelControl extends ModelControl {
+public class ChatModelControl extends SingleModelControl {
 
     private final BubbleFactory bubbleFactory;
 

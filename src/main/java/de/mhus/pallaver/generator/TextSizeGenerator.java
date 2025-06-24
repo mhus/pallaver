@@ -5,6 +5,7 @@ import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.model.SingleModelControl;
 import de.mhus.pallaver.quality.QualityCheck;
 import de.mhus.pallaver.quality.QualityCheckMonitor;
 import de.mhus.pallaver.tools.JavaScriptTool;
@@ -31,7 +32,7 @@ public class TextSizeGenerator implements Generator {
     @Override
     public void run(LLModel model, GeneratorMonitor monitor) {
         try {
-            var control = new ModelControl(model, modelService, ChatOptions
+            var control = new SingleModelControl(model, modelService, ChatOptions
                     .builder()
                     .build()) {
                 @Override

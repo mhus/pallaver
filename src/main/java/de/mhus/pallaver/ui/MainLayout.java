@@ -12,6 +12,11 @@ import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.HasDynamicTitle;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import de.mhus.pallaver.chat.ChatView;
+import de.mhus.pallaver.generator.GeneratorView;
+import de.mhus.pallaver.model.ModelsView;
+import de.mhus.pallaver.quality.QualityChecksView;
+import de.mhus.pallaver.talk.TalkView;
 
 @CssImport("./styles/custom.css")
 public class MainLayout extends AppLayout {
@@ -58,6 +63,8 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Models", ModelsView.class,
                 VaadinIcon.BUILDING.create()));
         nav.addItem(new SideNavItem("Chat", ChatView.class,
+                VaadinIcon.CHAT.create()));
+        nav.addItem(new SideNavItem("Talk", TalkView.class,
                 VaadinIcon.CHAT.create()));
         nav.addItem(new SideNavItem("Generator", GeneratorView.class,
                 VaadinIcon.CHAT.create()));

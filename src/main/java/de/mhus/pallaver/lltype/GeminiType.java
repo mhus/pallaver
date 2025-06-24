@@ -29,14 +29,19 @@ public class GeminiType implements LLType {
     private final List<String> supportedFeatures = List.of(LLMFeatures.STREAM, LLMFeatures.TOOLS, LLMFeatures.STREAM_TOOLS);
 
     private final String[] SUPPORTED_MODELS = {
-            "gemini-1.5-flash",
             "gemini-1.5",
+            "gemini-1.5-flash",
             "gemini-1.5-chat",
-            "gemini-1.5-chat-bison",
-            "gemini-1.5-chat-bison-v2",
-            "gemini-1.5-chat-bison-v2-001"
+            "gemini-1.5-pro",
+            "gemini-2.0",
+            "gemini-2.0-flash",
+            "gemini-2.0-chat",
+            "gemini-2.0-pro",
+            "gemini-2.5",
+            "gemini-2.5-flash",
+            "gemini-2.5-chat",
+            "gemini-2.5-pro"
     };
-
 
     @Override
     public List<LLModel> getDefaultModels() {

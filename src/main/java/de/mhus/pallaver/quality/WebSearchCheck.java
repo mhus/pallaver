@@ -2,6 +2,7 @@ package de.mhus.pallaver.quality;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.model.SingleModelControl;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.chat.ChatAssistant;
 import de.mhus.pallaver.chat.ChatOptions;
@@ -58,7 +59,7 @@ public class WebSearchCheck implements QualityCheck {
 
     private void testSimpleSearch(LLModel model, QualityCheckMonitor.QualityCheckTestMonitor monitor) {
         try {
-            var control = new ModelControl(model, modelService, ChatOptions
+            var control = new SingleModelControl(model, modelService, ChatOptions
                     .builder()
                     .mode(ChatOptions.MODE.CHAT)
                     .maxMessages(10)

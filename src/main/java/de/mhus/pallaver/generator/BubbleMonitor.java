@@ -4,7 +4,7 @@ import com.vaadin.flow.component.UI;
 import de.mhus.pallaver.quality.QualityCheckMonitor;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.ui.ChatBubble;
-import de.mhus.pallaver.ui.ChatPanel;
+import de.mhus.pallaver.ui.ChatHistoryPanel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -14,7 +14,7 @@ public class BubbleMonitor extends ChatBubble implements QualityCheckMonitor {
 
     private final UI ui;
 
-    public BubbleMonitor(UI ui, String title, ChatPanel.COLOR color) {
+    public BubbleMonitor(UI ui, String title, ChatHistoryPanel.COLOR color) {
         super(title, false, color);
         this.ui = ui;
     }

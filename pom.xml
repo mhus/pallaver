@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.0</version>
+        <version>3.5.0</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>de.mhus.pallaver</groupId>
@@ -16,14 +16,14 @@
     <packaging>jar</packaging>
     <properties>
         <java.version>21</java.version>
-        <vaadin.version>24.5.7</vaadin.version>
+        <vaadin.version>24.8.0</vaadin.version>
         <tmpl.plugin>2.2.1</tmpl.plugin>
         <license.plugin>4.6</license.plugin>
         <maven.version>3.2.5</maven.version>
         <sonar.organization>mhus</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <mhus-common.version>8.2.0-SNAPSHOT</mhus-common.version>
-        <langchain4j.version>1.0.1-beta6</langchain4j.version>
+        <langchain4j.version>1.1.0</langchain4j.version>
     </properties>
 
     <inceptionYear>2024</inceptionYear>

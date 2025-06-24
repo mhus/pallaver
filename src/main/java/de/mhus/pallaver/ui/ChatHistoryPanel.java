@@ -3,7 +3,7 @@ package de.mhus.pallaver.ui;
 import com.vaadin.flow.component.orderedlayout.Scroller;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 
-public class ChatPanel extends Scroller {
+public class ChatHistoryPanel extends Scroller {
 
     public enum COLOR {
         BLUE,
@@ -14,7 +14,7 @@ public class ChatPanel extends Scroller {
 
     private final VerticalLayout content = new VerticalLayout();
 
-    public ChatPanel() {
+    public ChatHistoryPanel() {
         setContent(content);
         addClassName("bubble-chat");
     }

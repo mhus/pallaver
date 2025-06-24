@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class DefaultFactory implements ChatModelControlFactory {
+public class DefaultChatFactory implements ChatModelControlFactory {
 
     @Autowired
     private ModelService modelService;

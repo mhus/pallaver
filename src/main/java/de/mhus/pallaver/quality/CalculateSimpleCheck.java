@@ -2,6 +2,7 @@ package de.mhus.pallaver.quality;
 
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
+import de.mhus.pallaver.model.SingleModelControl;
 import de.mhus.pallaver.tools.JavaScriptTool;
 import de.mhus.pallaver.ui.Bubble;
 import de.mhus.pallaver.chat.ChatOptions;
@@ -35,7 +36,7 @@ public class CalculateSimpleCheck implements QualityCheck {
 
     private void testWithTool(LLModel model, QualityCheckMonitor.QualityCheckTestMonitor monitor) {
         try {
-            var control = new ModelControl(model, modelService, ChatOptions
+            var control = new SingleModelControl(model, modelService, ChatOptions
                     .builder()
                     .mode(ChatOptions.MODE.CHAT)
                     .maxMessages(10)
@@ -67,7 +68,7 @@ public class CalculateSimpleCheck implements QualityCheck {
 
     private void testSimple(LLModel model, QualityCheckMonitor.QualityCheckTestMonitor monitor) {
         try {
-            var control = new ModelControl(model, modelService, ChatOptions
+            var control = new SingleModelControl(model, modelService, ChatOptions
                     .builder()
                     .mode(ChatOptions.MODE.CHAT)
                     .maxMessages(10)

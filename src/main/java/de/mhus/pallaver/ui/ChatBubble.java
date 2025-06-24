@@ -8,7 +8,7 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 public class ChatBubble extends Div implements Bubble {
-    private final ChatPanel.COLOR color;
+    private final ChatHistoryPanel.COLOR color;
     private final Div titleDiv;
     private final Div textDiv;
     private final Html textHtml;
@@ -17,7 +17,7 @@ public class ChatBubble extends Div implements Bubble {
     private Parser parser = Parser.builder().build();
     HtmlRenderer renderer = HtmlRenderer.builder().build();
 
-    public ChatBubble(String title, boolean left, ChatPanel.COLOR color) {
+    public ChatBubble(String title, boolean left, ChatHistoryPanel.COLOR color) {
         this.color = color;
         titleDiv = new Div(title);
         add(titleDiv);
