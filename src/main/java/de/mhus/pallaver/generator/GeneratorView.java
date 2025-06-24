@@ -63,6 +63,13 @@ public class GeneratorView extends VerticalLayout {
         setSizeFull();
 
         updateModelText();
+
+        modelItems.stream().filter(m -> m.getModel().isDefault()).findFirst().ifPresent(m -> {
+            selectedModelItem = m;
+            m.getItem().setChecked(true);
+            updateModelText();
+        });
+
     }
 
     private ListBox<Item> createCheckList() {
@@ -127,7 +134,7 @@ public class GeneratorView extends VerticalLayout {
     }
 
     private void updateModelText() {
-        infoText.setText("Models: " + (selectedModelItem == null ? "" : selectedModelItem.getTitle()));
+        infoText.setText("Model: " + (selectedModelItem == null ? "" : selectedModelItem.getTitle()));
     }
 
     @Getter

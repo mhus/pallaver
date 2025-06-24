@@ -24,7 +24,9 @@ import de.mhus.commons.io.CSVReader;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatOptions;
+import de.mhus.pallaver.chat.ChatView;
 import de.mhus.pallaver.chat.DefaultChatFactory;
+import de.mhus.pallaver.generator.GeneratorView;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
@@ -37,6 +39,7 @@ import dev.langchain4j.data.message.UserMessage;
 import elemental.json.JsonType;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -55,7 +58,9 @@ public class TalkView extends VerticalLayout {
     private ChatHistoryPanel chatHistory;
     private TextArea chatInput;
     private Span infoText;
-    private List<ModelItem> models = new ArrayList<>();
+    private List<MyModelItem> modelItems = new ArrayList<>();
+    private MyModelItem selectedModelItem;
+
     @Autowired
     private List<TalkControlFactory> controlFactories;
     @Autowired
@@ -115,11 +120,14 @@ public class TalkView extends VerticalLayout {
         add(menuBar, infoText, splitLayout, btnLayout);
         setSizeFull();
 
-        models.stream().filter(ModelItem::isDefault).forEach(m -> {
-            m.item.setChecked(true);
-            m.enabled = true;
-        });
         updateModelText();
+
+        modelItems.stream().filter(m -> m.getModel().isDefault()).findFirst().ifPresent(m -> {
+            selectedModelItem = m;
+            m.getItem().setChecked(true);
+            updateModelText();
+        });
+
     }
 
     private void actionSendMessage() {
@@ -131,14 +139,10 @@ public class TalkView extends VerticalLayout {
     private void actionSendMessage(String userMessage) {
         addChatBubble("You", true, ChatHistoryPanel.COLOR.BLUE).setText(userMessage);
         chatHistory.scrollToEnd();
-        if (userMessage.equals(chatInput.getValue())) // not selected
-            chatInput.setValue("");
         chatInput.setReadOnly(true);
         ColorRotator colorRotator = new ColorRotator();
         UI ui = UI.getCurrent();
-        models.stream().filter(ModelItem::isEnabled).forEach(m -> {
-            Thread.startVirtualThread(() -> m.answer(userMessage, colorRotator.next(), ui));
-        });
+        Thread.startVirtualThread(() -> selectedModelItem.answer(selectedModelControlFactory, userMessage, colorRotator.next(), ui));
         Thread.startVirtualThread(() -> {
             try {
                 Thread.sleep(1000);
@@ -161,7 +165,7 @@ public class TalkView extends VerticalLayout {
             var item = menuModel.addItem(model.getTitle());
             item.setCheckable(true);
             item.setChecked(false);
-            models.add(new ModelItem(model, item));
+            modelItems.add(new MyModelItem(model, item));
         });
 
         var menuControl = menuBar.addItem("Control").getSubMenu();
@@ -241,54 +245,59 @@ public class TalkView extends VerticalLayout {
     }
 
     private void actionReset() {
-        models.forEach(model -> model.reset());
+        if (selectedModelItem != null) {
+            selectedModelItem.reset();
+        }
         updateModelText();
         chatHistory.clear();
         chatInput.setValue("");
     }
 
     private void updateModelText() {
-        final StringBuffer text = new StringBuffer();
-        models.stream().filter(ModelItem::isEnabled).forEach(m -> text.append(m.getTitle()).append(" "));
-        infoText.setText("Control: " + selectedModelControlFactory.getTitle() + ", Models: " + text);
+        infoText.setText("Control: " + selectedModelControlFactory.getTitle() + ", Model: " + (selectedModelItem == null ? "" : selectedModelItem.getTitle()));
     }
 
     @Getter
-    private class ModelItem {
-        MenuItem item;
-        LLModel model;
-        boolean enabled;
-
+    private class MyModelItem {
+        private final LLModel model;
         private ModelControl control;
+        MenuItem item;
+        @Setter
+        private ChatHistoryPanel.COLOR color = ChatHistoryPanel.COLOR.GREEN;
 
-        public ModelItem(LLModel model, MenuItem item) {
+        public MyModelItem(LLModel model, MenuItem item) {
             this.model = model;
             this.item = item;
+
             item.addClickListener(e -> {
-                enabled = item.isChecked();
+                if (selectedModelItem != null)
+                    selectedModelItem.reset();
+                reset();
+                selectedModelItem = this;
+                modelItems.forEach(m -> m.getItem().setChecked(m == selectedModelItem));
                 updateModelText();
             });
-        }
-
-        public boolean isDefault() {
-            return model.isDefault();
-        }
-
-        public void reset() {
-            if (control != null)
-                control.reset(null);
-            control = null;
         }
 
         public String getTitle() {
             return model.getTitle();
         }
 
-        public void answer(String userMessage, ChatHistoryPanel.COLOR color, UI ui) {
+        public boolean isDefault() {
+            return model.isDefault();
+        }
+
+        public void answer(TalkControlFactory selectedModelControlFactory, String userMessage, ChatHistoryPanel.COLOR next, UI ui) {
             if (control == null) {
                 control = selectedModelControlFactory.createModelControl(model, new ChatViewBubbleFactory(color, ui));
             }
             control.answer(userMessage);
+        }
+
+        public void reset() {
+            if (control != null)
+                control.reset(null);
+            control = null;
         }
 
     }
