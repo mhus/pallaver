@@ -26,4 +26,6 @@ public interface LLType {
     boolean supports(LLModel model, String feature);
 
     ChatModel createChatModel(LLModel model, ModelOptions options);
+
+    int getMaxTokens(LLModel model);
 }

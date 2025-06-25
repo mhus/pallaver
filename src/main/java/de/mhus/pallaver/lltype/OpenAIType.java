@@ -95,4 +95,10 @@ public class OpenAIType implements LLType {
 
         return builder.build();
     }
+
+    @Override
+    public int getMaxTokens(LLModel model) {
+        return 8192;
+    }
+
 }

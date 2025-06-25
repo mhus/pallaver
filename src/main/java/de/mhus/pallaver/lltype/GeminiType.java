@@ -104,4 +104,9 @@ public class GeminiType implements LLType {
                 //.presencePenalty(options.getPresencePenalty())
                 .build();
     }
+
+    @Override
+    public int getMaxTokens(LLModel model) {
+        return 8192;
+    }
 }

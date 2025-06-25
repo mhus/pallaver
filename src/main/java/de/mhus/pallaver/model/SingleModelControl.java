@@ -61,12 +61,16 @@ public abstract class SingleModelControl implements ModelControl {
     }
 
     public AiMessage answer(String userMessage) {
+        return answer(getTitle(), userMessage);
+    }
+
+    public AiMessage answer(String title, String userMessage) {
         Bubble otherBubble = null;
         exception = null;
         try {
 
             initModel();
-            otherBubble = addChatBubble(getTitle());
+            otherBubble = addChatBubble(title);
 
             addToChatMemory(userMessage);
             CompletableFuture<AiMessage> futureAiMessage = new CompletableFuture<>();
@@ -194,7 +198,7 @@ public abstract class SingleModelControl implements ModelControl {
 
     public ChatMemory createChatMemory() {
         tokenizer = modelService.createTokenizer(model);
-        return TokenWindowChatMemory.withMaxTokens(chatOptions.getMaxTokens(), tokenizer);
+        return TokenWindowChatMemory.withMaxTokens(modelService.getMaxTokens(model, chatOptions), tokenizer);
     }
 
     public ChatAssistant createChatAssistant() {

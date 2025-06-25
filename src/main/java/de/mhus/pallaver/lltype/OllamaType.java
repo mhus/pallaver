@@ -133,4 +133,9 @@ public class OllamaType implements LLType {
     public void x() {
     }
 
+    @Override
+    public int getMaxTokens(LLModel model) {
+        return 1000;
+    }
+
 }

@@ -19,7 +19,7 @@ public class ChatOptions {
     @Builder.Default
     private ModelOptions modelOptions = new ModelOptions();
     @Builder.Default
-    private int maxTokens = 1000;
+    private int maxTokens = 0;
     @Builder.Default
     private int maxMessages = 30;
     @Builder.Default

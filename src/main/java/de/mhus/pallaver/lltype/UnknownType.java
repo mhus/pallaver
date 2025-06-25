@@ -59,4 +59,10 @@ public class UnknownType implements LLType {
     public int hashCode() {
         return getName().hashCode();
     }
+
+    @Override
+    public int getMaxTokens(LLModel model) {
+        return 0;
+    }
+
 }

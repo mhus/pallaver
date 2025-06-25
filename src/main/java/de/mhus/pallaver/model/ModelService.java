@@ -3,6 +3,7 @@ package de.mhus.pallaver.model;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import de.mhus.commons.tools.MFile;
+import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.lltype.LLType;
 import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
@@ -99,5 +100,13 @@ public class ModelService {
     public ChatModel createChatModel(LLModel model, ModelOptions options) {
         var type = getModelType(model);
         return type.createChatModel(model, options);
+    }
+
+    public int getMaxTokens(LLModel model, ChatOptions options) {
+        if (options != null && options.getMaxTokens() > 0) {
+            return options.getMaxTokens();
+        }
+        var type = getModelType(model);
+        return type.getMaxTokens(model);
     }
 }

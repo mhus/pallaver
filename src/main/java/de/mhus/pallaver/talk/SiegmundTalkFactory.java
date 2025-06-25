@@ -94,12 +94,13 @@ public class SiegmundTalkFactory implements TalkControlFactory {
 
     private class SimpleTalkControl implements ModelControl {
 
-        private SingleTalkControl id;
+        private SingleTalkControl it;
         private SingleTalkControl ego;
         private SingleTalkControl superEgo;
         private final LLModel model;
         private final ModelService modelService;
         private final BubbleFactory bubbleFactory;
+        private SingleTalkControl siegmund;
 
         public SimpleTalkControl(LLModel model, ModelService modelService, BubbleFactory bubbleFactory) {
             this.model = model;
@@ -110,28 +111,32 @@ public class SiegmundTalkFactory implements TalkControlFactory {
 
         @Override
         public AiMessage answer(String userMessage) {
-            var idAnswer = id.answer(userMessage).text();
+            var idAnswer = it.answer(userMessage).text();
             var egoAnswer = ego.answer(userMessage).text();
             var superEgoAnswer = superEgo.answer(userMessage).text();
 
-            superEgo.answer("""
-                    Beurteile die Antworten des Es und des Ichs. 
+            siegmund.answer("Siegmunds Bewertung der Antworten",
+                    """
+                    Beurteile die Antworten des Es und des Ichs und des Über-Ichs. 
                     Welche moralischen und gesellschaftlichen Normen sollten beachtet werden?
                     
                     Antwort des Es: %s
                     
                     Antwort des Ichs: %s
                     
-                    """.formatted(idAnswer, egoAnswer));
+                    Antwort des Über-Ichs: %s
+                    
+                    """.formatted(idAnswer, egoAnswer, superEgoAnswer));
 
-            return superEgo.answer("""
-                    Gib eine kurze Empfehlung,
+            return siegmund.answer("Empfehlung",
+        """
+                    Gib eine kurze Empfehlung was zu tun ist.
                     """);
         }
 
         @Override
         public void reset(ChatOptions options) {
-            id = new SingleTalkControl(model, modelService, bubbleFactory) {
+            it = new SingleTalkControl(model, modelService, bubbleFactory) {
                 @Override
                 public String getTitle() {
                     return "Es";
@@ -149,12 +154,20 @@ public class SiegmundTalkFactory implements TalkControlFactory {
                     return "Über-Ich";
                 }
             };
+            siegmund = new SingleTalkControl(model, modelService, bubbleFactory) {
+                @Override
+                public String getTitle() {
+                    return "Sigmund Freud";
+                }
+            };
 
-            id.initModel();
+
+            it.initModel();
             ego.initModel();
             superEgo.initModel();
+            siegmund.initModel();
 
-            id.getChatMemory().add(UserMessage.userMessage("""
+            it.getChatMemory().add(UserMessage.userMessage("""
                     Benehmen sich wie das Es in Siegmund Freud's Konzept der Psyche.
                     Du bist der unbewusste, primitive Teil der Psyche, der von Trieben gesteuert wird und nach dem Lustprinzip funktioniert.
                     Antworte auf Fragen, indem du sofortige Befriedigung deiner Bedürfnisse suchst und keine Rücksicht auf soziale Normen nimmst.
@@ -170,6 +183,11 @@ public class SiegmundTalkFactory implements TalkControlFactory {
                     Benehmen sich wie das Über-Ich in Siegmund Freud's Konzept der Psyche.
                     Du bist der verinnerlichte Teil der Psyche, der die moralischen Normen und Werte der Gesellschaft repräsentiert.
                     Antworte auf Fragen, indem du die Handlungen des Ichs bewertest und versuchst, Perfektion zu erreichen.
+                    """));
+            siegmund.getChatMemory().add(UserMessage.userMessage("""
+                    Benehmen sich wie Siegmund Freud.
+                    Du bist der Begründer der Psychoanalyse und verstehst die Dynamik zwischen Es, Ich und Über-Ich.
+                    Antworte auf Fragen, indem du die Konflikte zwischen diesen Instanzen erklärst und Einsichten in die menschliche Psyche gibst.
                     """));
         }
     }
