@@ -1,5 +1,6 @@
 package de.mhus.pallaver.generator;
 
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import de.mhus.pallaver.model.SingleModelControl;
@@ -17,6 +18,9 @@ public class SimpleGenerator implements  Generator {
     @Autowired
     ModelService modelService;
 
+    @Autowired
+    CaptureService captureService;
+
     @Override
     public String getTitle() {
         return "Simple";
@@ -27,7 +31,7 @@ public class SimpleGenerator implements  Generator {
       var options = new ChatOptions();
       options.getModelOptions().setTemperature(1);
 
-      var control = new SingleModelControl(model, modelService, options) {
+      var control = new SingleModelControl(model, modelService, options, captureService) {
           @Override
           protected Bubble addChatBubble(String title) {
               return monitor.createResultBubble(title);

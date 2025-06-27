@@ -1,5 +1,6 @@
 package de.mhus.pallaver.talk;
 
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
@@ -12,6 +13,9 @@ public class DefaultTalkFactory implements TalkControlFactory {
 
     @Autowired
     private ModelService modelService;
+
+    @Autowired
+    private CaptureService captureService;
 
     @Override
     public String getTitle() {
@@ -31,9 +35,9 @@ public class DefaultTalkFactory implements TalkControlFactory {
     private class SimpleTalkControl extends SingleTalkControl {
 
         public SimpleTalkControl(LLModel model, ModelService modelService, BubbleFactory bubbleFactory) {
-            super(model, modelService, bubbleFactory);
+            super(model, modelService, captureService, bubbleFactory);
             initModel();
-            getChatMemory().add(UserMessage.userMessage("""
+            addChatMemoryMessage(UserMessage.userMessage("""
                     Du bist ein deutscher Chatbot, der auf die Fragen der Benutzer antwortet.
                     Deine Antworten sollten klar, präzise und informativ sein.
                     Bitte beantworte die Fragen so gut wie möglich und halte dich an die deutsche Sprache.

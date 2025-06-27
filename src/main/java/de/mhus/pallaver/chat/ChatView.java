@@ -323,10 +323,17 @@ public class ChatView extends VerticalLayout {
         }
 
         public void answer(String userMessage, ChatHistoryPanel.COLOR color, UI ui) {
-            if (control == null) {
-                control = selectedModelControlFactory.createModelControl(model, chatOptions, new ChatViewBubbleFactory(color, ui));
+            try {
+                if (control == null) {
+                    control = selectedModelControlFactory.createModelControl(model, chatOptions, new ChatViewBubbleFactory(color, ui));
+                }
+                control.answer(userMessage);
+            } finally {
+                ui.access(() -> {
+                    chatInput.setReadOnly(false);
+                    chatHistory.scrollToEnd();
+                });
             }
-            control.answer(userMessage);
         }
 
     }

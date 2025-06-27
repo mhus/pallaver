@@ -1,12 +1,14 @@
 package de.mhus.pallaver.model;
 
 import de.mhus.commons.tools.MString;
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.chat.ChatAssistant;
 import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.chat.StreamChatAssistant;
 import de.mhus.pallaver.lltype.LLMFeatures;
 import de.mhus.pallaver.ui.Bubble;
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
@@ -32,6 +34,7 @@ public abstract class SingleModelControl implements ModelControl {
     @Getter
     LLModel model;
     private final ModelService modelService;
+    private final CaptureService captureService;
     @Getter
     volatile boolean enabled = false;
     @Getter
@@ -50,10 +53,11 @@ public abstract class SingleModelControl implements ModelControl {
     @Getter
     private TokenCountEstimator tokenizer;
 
-    public SingleModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions) {
+    public SingleModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions, CaptureService captureService) {
         this.model = model;
         this.modelService = modelService;
         this.chatOptions = chatOptions;
+        this.captureService = captureService;
     }
 
     public String getTitle() {
@@ -91,12 +95,14 @@ public abstract class SingleModelControl implements ModelControl {
             }
             var answer = futureAiMessage.get();
             chatMemory.add(answer);
+            captureService.capture(answer);
             return answer;
         } catch (Exception e) {
             LOGGER.error("Error", e);
             if (otherBubble != null)
                 otherBubble = addChatBubble(model.getTitle());
             otherBubble.appendText("Error: " + e.getMessage());
+            captureService.capture("error", e.getMessage());
             exception = e;
             return AiMessage.from("Error: " + e.getMessage());
         }
@@ -161,6 +167,7 @@ public abstract class SingleModelControl implements ModelControl {
 
     protected void addToChatMemory(String userMessage) {
         chatMemory.add(UserMessage.userMessage(userMessage));
+        captureService.capture("add", userMessage);
     }
 
     public void initModel() {
@@ -170,6 +177,7 @@ public abstract class SingleModelControl implements ModelControl {
         chatMemory = createChatMemory();
         if (MString.isSet(chatOptions.getPrompt())) {
             chatMemory.add(SystemMessage.from(chatOptions.getPrompt()));
+            captureService.capture("prompt", chatOptions.getPrompt());
         }
 
         if (isStreamChatModel()) {
@@ -235,4 +243,8 @@ public abstract class SingleModelControl implements ModelControl {
         return List.of();
     }
 
+    public void addChatMemoryMessage(ChatMessage message) {
+        chatMemory.add(message);
+        captureService.capture(message);
+    }
 }

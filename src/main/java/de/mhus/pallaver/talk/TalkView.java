@@ -24,9 +24,6 @@ import de.mhus.commons.io.CSVReader;
 import de.mhus.commons.tools.MString;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatOptions;
-import de.mhus.pallaver.chat.ChatView;
-import de.mhus.pallaver.chat.DefaultChatFactory;
-import de.mhus.pallaver.generator.GeneratorView;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
 import de.mhus.pallaver.model.ModelService;
@@ -35,7 +32,6 @@ import de.mhus.pallaver.ui.ChatBubble;
 import de.mhus.pallaver.ui.ChatHistoryPanel;
 import de.mhus.pallaver.ui.ColorRotator;
 import de.mhus.pallaver.ui.MainLayout;
-import dev.langchain4j.data.message.UserMessage;
 import elemental.json.JsonType;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -66,6 +62,11 @@ public class TalkView extends VerticalLayout {
     @Autowired
     private DefaultTalkFactory defaultModelControlFactory;
     private TalkControlFactory selectedModelControlFactory;
+    private MenuItem btnStop;
+    private MenuItem btnModel;
+    private MenuItem btnControl;
+    private Button btnSend;
+    private Button btnInputPromptMenu;
 
     @PostConstruct
     public void init() {
@@ -90,13 +91,13 @@ public class TalkView extends VerticalLayout {
         splitLayout.setOrientation(SplitLayout.Orientation.VERTICAL);
         splitLayout.setSplitterPosition(80);
 
-        var sendBtn = new Button("Press Control+Enter to submit", e -> actionSendMessage());
-        sendBtn.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        btnSend = new Button("Press Control+Enter to submit", e -> actionSendMessage());
+        btnSend.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
 
-        var inputPromptMenuBtn = new Button("Prompt");
+        btnInputPromptMenu = new Button("Prompt");
         var inputPromptMenu = new ContextMenu();
         inputPromptMenu.setOpenOnClick(true);
-        inputPromptMenu.setTarget(inputPromptMenuBtn);
+        inputPromptMenu.setTarget(btnInputPromptMenu);
         CSVReader reader = new CSVReader(new InputStreamReader(getClass().getResourceAsStream("/input-prompts.csv")));
         try {
             reader.readHeader(true);
@@ -112,7 +113,7 @@ public class TalkView extends VerticalLayout {
             LOGGER.error("Error", e);
         }
 
-        var btnLayout = new HorizontalLayout(sendBtn, inputPromptMenuBtn);
+        var btnLayout = new HorizontalLayout(btnSend, btnInputPromptMenu);
         btnLayout.setWidthFull();
         btnLayout.setMargin(false);
         btnLayout.setPadding(false);
@@ -142,6 +143,7 @@ public class TalkView extends VerticalLayout {
         chatInput.setReadOnly(true);
         ColorRotator colorRotator = new ColorRotator();
         UI ui = UI.getCurrent();
+        setRunning(true);
         Thread.startVirtualThread(() -> selectedModelItem.answer(selectedModelControlFactory, userMessage, colorRotator.next(), ui));
         Thread.startVirtualThread(() -> {
             try {
@@ -153,6 +155,14 @@ public class TalkView extends VerticalLayout {
         });
     }
 
+    private void setRunning(boolean running) {
+        btnStop.setEnabled(running);
+        btnModel.setEnabled(!running);
+        btnControl.setEnabled(!running);
+        btnSend.setEnabled(!running);
+        btnInputPromptMenu.setEnabled(!running);
+    }
+
     private ChatBubble addChatBubble(String person, boolean left, ChatHistoryPanel.COLOR color) {
         return chatHistory.addBubble(person, left, color);
     }
@@ -160,7 +170,8 @@ public class TalkView extends VerticalLayout {
     private MenuBar createMenuBar() {
         var menuBar = new MenuBar();
         menuBar.addItem(VaadinIcon.RECYCLE.create(), e -> actionReset());
-        var menuModel = menuBar.addItem("Model").getSubMenu();
+        btnModel = menuBar.addItem("Model");
+        var menuModel = btnModel.getSubMenu();
         modelService.getModels().forEach(model -> {
             var item = menuModel.addItem(model.getTitle());
             item.setCheckable(true);
@@ -168,7 +179,8 @@ public class TalkView extends VerticalLayout {
             modelItems.add(new MyModelItem(model, item));
         });
 
-        var menuControl = menuBar.addItem("Control").getSubMenu();
+        btnControl = menuBar.addItem("Control");
+        var menuControl = btnControl.getSubMenu();
         controlFactories.forEach(factory -> {
             var item = menuControl.addItem(factory.getTitle());
             item.setCheckable(true);
@@ -182,11 +194,19 @@ public class TalkView extends VerticalLayout {
             });
         });
 
+        btnStop = menuBar.addItem("Stop", e -> stopExecution());
+        btnStop.setEnabled(false);
+
+
 //        var menuPrompt = menuBar.addItem("Prompt").getSubMenu();
 //        menuPrompt.addItem("awesome-chatgpt-prompts", e -> actionSelectPrompt("awesome-chatgpt-prompts", "https://raw.githubusercontent.com/f/awesome-chatgpt-prompts/refs/heads/main/prompts.csv"));
 
 
         return menuBar;
+    }
+
+    private void stopExecution() {
+        selectedModelItem.stop();
     }
 
 //    private void actionSelectPrompt(String title, String url) {
@@ -260,7 +280,7 @@ public class TalkView extends VerticalLayout {
     @Getter
     private class MyModelItem {
         private final LLModel model;
-        private ModelControl control;
+        private TalkControl control;
         MenuItem item;
         @Setter
         private ChatHistoryPanel.COLOR color = ChatHistoryPanel.COLOR.GREEN;
@@ -300,6 +320,15 @@ public class TalkView extends VerticalLayout {
             control = null;
         }
 
+        public void stop() {
+            if (control != null) {
+                control.stop();
+            }
+            setRunning(false);
+            chatInput.setReadOnly(false);
+            chatInput.setValue("");
+            chatHistory.scrollToEnd();
+        }
     }
 
     private class ChatViewBubbleFactory implements BubbleFactory {

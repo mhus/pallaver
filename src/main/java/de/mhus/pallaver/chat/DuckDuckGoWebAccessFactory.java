@@ -1,5 +1,6 @@
 package de.mhus.pallaver.chat;
 
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import de.mhus.pallaver.tools.DuckDuckGoSearchTool;
@@ -29,6 +30,9 @@ public class DuckDuckGoWebAccessFactory implements ChatModelControlFactory {
     @Autowired
     private ModelService modelService;
 
+    @Autowired
+    private CaptureService captureService;
+
     @Override
     public String getTitle() {
         return "DuckDuckGo Web Access";
@@ -36,7 +40,7 @@ public class DuckDuckGoWebAccessFactory implements ChatModelControlFactory {
 
     @Override
     public ChatModelControl createModelControl(LLModel model, ChatOptions chatOptions, BubbleFactory bubbleFactory) {
-        return new WebAccessChatModelControl(model, modelService, chatOptions, bubbleFactory);
+        return new WebAccessChatModelControl(model, modelService, chatOptions, captureService, bubbleFactory);
     }
 
     @Override
@@ -46,8 +50,8 @@ public class DuckDuckGoWebAccessFactory implements ChatModelControlFactory {
 
     private class WebAccessChatModelControl extends ChatModelControl {
 
-        public WebAccessChatModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions, BubbleFactory bubbleFactory) {
-            super(model, modelService, chatOptions, bubbleFactory);
+        public WebAccessChatModelControl(LLModel model, ModelService modelService, ChatOptions chatOptions, CaptureService captureService, BubbleFactory bubbleFactory) {
+            super(model, modelService, chatOptions, captureService, bubbleFactory);
         }
 
         public void initModel() {

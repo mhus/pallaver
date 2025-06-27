@@ -1,5 +1,6 @@
 package de.mhus.pallaver.talk;
 
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.chat.BubbleFactory;
 import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.model.LLModel;
@@ -62,13 +63,16 @@ public class SiegmundTalkFactory implements TalkControlFactory {
     @Autowired
     private ModelService modelService;
 
+    @Autowired
+    private CaptureService captureService;
+
     @Override
     public String getTitle() {
         return "Siegmund Freud's Psyche";
     }
 
     @Override
-    public ModelControl createModelControl(LLModel model, BubbleFactory bubbleFactory) {
+    public TalkControl createModelControl(LLModel model, BubbleFactory bubbleFactory) {
         return new SimpleTalkControl(model, modelService, bubbleFactory);
     }
 
@@ -92,7 +96,7 @@ public class SiegmundTalkFactory implements TalkControlFactory {
                 """;
     }
 
-    private class SimpleTalkControl implements ModelControl {
+    private class SimpleTalkControl extends EnhancedTalkControl {
 
         private SingleTalkControl it;
         private SingleTalkControl ego;
@@ -112,8 +116,11 @@ public class SiegmundTalkFactory implements TalkControlFactory {
         @Override
         public AiMessage answer(String userMessage) {
             var idAnswer = it.answer(userMessage).text();
+            if (isStopped()) return null;
             var egoAnswer = ego.answer(userMessage).text();
+            if (isStopped()) return null;
             var superEgoAnswer = superEgo.answer(userMessage).text();
+            if (isStopped()) return null;
 
             siegmund.answer("Siegmunds Bewertung der Antworten",
                     """
@@ -136,25 +143,25 @@ public class SiegmundTalkFactory implements TalkControlFactory {
 
         @Override
         public void reset(ChatOptions options) {
-            it = new SingleTalkControl(model, modelService, bubbleFactory) {
+            it = new SingleTalkControl(model, modelService, captureService, bubbleFactory) {
                 @Override
                 public String getTitle() {
                     return "Es";
                 }
             };
-            ego = new SingleTalkControl( model, modelService, bubbleFactory) {
+            ego = new SingleTalkControl( model, modelService, captureService, bubbleFactory) {
                 @Override
                 public String getTitle() {
                     return "Ich";
                 }
             };
-            superEgo = new SingleTalkControl(model, modelService, bubbleFactory) {
+            superEgo = new SingleTalkControl(model, modelService, captureService, bubbleFactory) {
                 @Override
                 public String getTitle() {
                     return "Über-Ich";
                 }
             };
-            siegmund = new SingleTalkControl(model, modelService, bubbleFactory) {
+            siegmund = new SingleTalkControl(model, modelService, captureService, bubbleFactory) {
                 @Override
                 public String getTitle() {
                     return "Sigmund Freud";
@@ -167,24 +174,24 @@ public class SiegmundTalkFactory implements TalkControlFactory {
             superEgo.initModel();
             siegmund.initModel();
 
-            it.getChatMemory().add(UserMessage.userMessage("""
+            it.addChatMemoryMessage(UserMessage.userMessage("""
                     Benehmen sich wie das Es in Siegmund Freud's Konzept der Psyche.
                     Du bist der unbewusste, primitive Teil der Psyche, der von Trieben gesteuert wird und nach dem Lustprinzip funktioniert.
                     Antworte auf Fragen, indem du sofortige Befriedigung deiner Bedürfnisse suchst und keine Rücksicht auf soziale Normen nimmst.
                     """));
 
-            ego.getChatMemory().add(UserMessage.userMessage("""
+            ego.addChatMemoryMessage(UserMessage.userMessage("""
                     Benehmen sich wie das Ich in Siegmund Freud's Konzept der Psyche.
                     Du bist der bewusste Teil der Psyche, der zwischen den Ansprüchen des Es, des Über-Ichs und der Realität vermittelt.
                     Antworte auf Fragen, indem du realistische Wege findest, die Bedürfnisse des Es zu befriedigen, während du soziale Normen berücksichtigst.
                     """));
 
-            superEgo.getChatMemory().add(UserMessage.userMessage("""
+            superEgo.addChatMemoryMessage(UserMessage.userMessage("""
                     Benehmen sich wie das Über-Ich in Siegmund Freud's Konzept der Psyche.
                     Du bist der verinnerlichte Teil der Psyche, der die moralischen Normen und Werte der Gesellschaft repräsentiert.
                     Antworte auf Fragen, indem du die Handlungen des Ichs bewertest und versuchst, Perfektion zu erreichen.
                     """));
-            siegmund.getChatMemory().add(UserMessage.userMessage("""
+            siegmund.addChatMemoryMessage(UserMessage.userMessage("""
                     Benehmen sich wie Siegmund Freud.
                     Du bist der Begründer der Psychoanalyse und verstehst die Dynamik zwischen Es, Ich und Über-Ich.
                     Antworte auf Fragen, indem du die Konflikte zwischen diesen Instanzen erklärst und Einsichten in die menschliche Psyche gibst.

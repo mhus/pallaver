@@ -107,6 +107,6 @@ public class GeminiType implements LLType {
 
     @Override
     public int getMaxTokens(LLModel model) {
-        return 8192;
+        return 1048576;
     }
 }

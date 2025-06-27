@@ -10,7 +10,7 @@ public interface TalkControlFactory {
 
     String getTitle();
 
-    ModelControl createModelControl(LLModel model, BubbleFactory bubbleFactory);
+    TalkControl createModelControl(LLModel model, BubbleFactory bubbleFactory);
 
     String getDefaultPrompt();
 }

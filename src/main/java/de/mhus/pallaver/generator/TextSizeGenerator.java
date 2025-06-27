@@ -1,6 +1,7 @@
 package de.mhus.pallaver.generator;
 
 import de.mhus.commons.util.Lorem;
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.chat.ChatOptions;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelControl;
@@ -24,6 +25,9 @@ public class TextSizeGenerator implements Generator {
     @Autowired
     ModelService modelService;
 
+    @Autowired
+    CaptureService captureService;
+
     @Override
     public String getTitle() {
         return "Text Size";
@@ -34,7 +38,7 @@ public class TextSizeGenerator implements Generator {
         try {
             var control = new SingleModelControl(model, modelService, ChatOptions
                     .builder()
-                    .build()) {
+                    .build(), captureService) {
                 @Override
                 protected Bubble addChatBubble(String title) {
                     return monitor.createQuestionBubble(title);

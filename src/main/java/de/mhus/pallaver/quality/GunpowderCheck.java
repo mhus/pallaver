@@ -1,5 +1,6 @@
 package de.mhus.pallaver.quality;
 
+import de.mhus.pallaver.capture.CaptureService;
 import de.mhus.pallaver.model.LLModel;
 import de.mhus.pallaver.model.ModelService;
 import de.mhus.pallaver.model.SingleModelControl;
@@ -17,6 +18,9 @@ public class GunpowderCheck implements QualityCheck {
 
     @Autowired
     ModelService modelService;
+
+    @Autowired
+    CaptureService captureService;
 
     @Override
     public String getTitle() {
@@ -39,7 +43,7 @@ public class GunpowderCheck implements QualityCheck {
                     .maxTokens(1000)
                     .useTools(false)
                     .modelOptions(new ModelOptions())
-                    .build()) {
+                    .build(), captureService) {
                 @Override
                 protected Bubble addChatBubble(String title) {
                     return monitor.getBubble();
