@@ -5,6 +5,7 @@ import de.mhus.pallaver.model.ModelOptions;
 import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiStreamingChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiTokenCountEstimator;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class GeminiType implements LLType {
@@ -67,6 +69,16 @@ public class GeminiType implements LLType {
                     .apiKey(model.getApiKey())
                     .modelName(model.getModel())
                     .temperature(options.getTemperature())
+                    .defaultRequestParameters(
+                            ChatRequestParameters.builder()
+                                    .maxOutputTokens(100000) // TODO: make configurable
+
+//                                    .logRequestsAndResponses(true)
+                                    .topP(1.0) // TODO: make configurable
+                                    .frequencyPenalty(0.0) // TODO: make configurable
+                                    .presencePenalty(0.0) // TODO: make configurable
+                                    .build()
+                    )
                     //.topP(options.getTopP())
                     //.maxTokens(options.getMaxTokens())
                     //.frequencyPenalty(options.getFrequencyPenalty())

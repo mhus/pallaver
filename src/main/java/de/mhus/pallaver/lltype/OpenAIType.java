@@ -58,7 +58,7 @@ public class OpenAIType implements LLType {
         var builder = OpenAiStreamingChatModel.builder();
         builder.modelName(model.getModel());
         builder.apiKey(model.getApiKey());
-        builder.temperature(options.getTemperature());
+        // builder.temperature(options.getTemperature());
         if (MString.isSet(options.getFormat()))
             builder.responseFormat(options.getFormat());
         if (options.getSeed() != null)
@@ -82,7 +82,7 @@ public class OpenAIType implements LLType {
         var builder = OpenAiChatModel.builder();
         builder.modelName(model.getModel());
         builder.apiKey(model.getApiKey());
-        builder.temperature(options.getTemperature());
+        // builder.temperature(options.getTemperature());
         if (MString.isSet(options.getFormat()))
             builder.responseFormat(options.getFormat());
         if (options.getSeed() != null)

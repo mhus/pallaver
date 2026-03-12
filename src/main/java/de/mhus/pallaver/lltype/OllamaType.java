@@ -7,6 +7,7 @@ import de.mhus.pallaver.model.ModelOptions;
 import dev.langchain4j.model.TokenCountEstimator;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.embedding.onnx.HuggingFaceTokenCountEstimator;
 import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.ollama.OllamaModels;
@@ -49,8 +50,8 @@ public class OllamaType implements LLType {
         builder.baseUrl(model.getUrl());
         builder.modelName(model.getModel());
         builder.temperature(options.getTemperature());
-        if (MString.isSet(options.getFormat()))
-            builder.format(options.getFormat());
+//TODO        if (MString.isSet(options.getFormat()))
+//            builder.responseFormat(ResponseFormat.builder()..build()options.getFormat());
         if (options.getSeed() != null)
             builder.seed(options.getSeed());
         if (options.getTimeoutInSeconds() != null)

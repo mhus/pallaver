@@ -15,12 +15,14 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 public class AdamsTalkFactory implements TalkControlFactory {
 
@@ -75,9 +77,9 @@ public class AdamsTalkFactory implements TalkControlFactory {
             var progressBubble = bubbleFactory.createBubble("Progress");
             var hiddenBubbleFactory = HiddenBubble.factory(progressBubble, '.');
             try {
-                var kafka = new SingleTalkControl(model, modelService, captureService, hiddenBubbleFactory);
+                var author = new SingleTalkControl(model, modelService, captureService, hiddenBubbleFactory);
 
-                var plotAnswer = kafka.answer(
+                var plotAnswer = author.answer(
                         "Plot",
                         """
                                 Du bist der Schriftsteller Douglas Adams. Deine Texte sind voller Humor und Ironie.
@@ -102,7 +104,9 @@ public class AdamsTalkFactory implements TalkControlFactory {
                                 }
                                 """.formatted(userMessage));
 
+                LOGGER.info("Plot answer: {}", plotAnswer.text());
                 var plotJson = extractJson(plotAnswer.text());
+                LOGGER.info("Plot JSON: {}", plotJson);
                 var plot = objectMapper.readValue(plotJson, Plot.class);
                 bubbleFactory.createBubble("Plot").appendText(
                         "*Titel:* " + plot.getTitle() + "\n\n" +
@@ -111,14 +115,14 @@ public class AdamsTalkFactory implements TalkControlFactory {
                         "*Kapitel:* " + plot.getChapters().stream().map(Chapter::getTitle).toList() + "\n\n"
                 );
 
-                kafka.reset(null);
-                kafka.initModel();
+                author.reset(null);
+                author.initModel();
                 if (isStopped()) return null;
 
                 StringBuilder result = new StringBuilder();
                 result.append("# ").append(plot.getTitle()).append("\n\n");
 
-                kafka.addChatMemoryMessage(UserMessage.userMessage(
+                author.addChatMemoryMessage(UserMessage.userMessage(
                         """
                              Du bist der Schriftsteller Douglas Adams. Deine Texte sind voller Humor und Ironie.
                              
@@ -136,7 +140,7 @@ public class AdamsTalkFactory implements TalkControlFactory {
                 for (var chapter : plot.chapters) {
                     if (isStopped()) return null;
                     result.append("## ").append(chapter.getTitle()).append("\n\n");
-                    var chapterAnswer = kafka.answer(
+                    var chapterAnswer = author.answer(
                             "Kapitel: " + chapter.getTitle(),
                             """
                                     Schreibe das Kapitel '%s'.
@@ -144,6 +148,7 @@ public class AdamsTalkFactory implements TalkControlFactory {
                                     %s
                                     """.formatted(chapter.getTitle(), chapter.getDescription()));
 
+                    LOGGER.info("Chapter answer: {}", chapterAnswer.text());
                     var chapterJson = extractJson(chapterAnswer.text());
                     var chapterText = objectMapper.readValue(chapterJson, ChapterText.class);
 
@@ -155,8 +160,9 @@ public class AdamsTalkFactory implements TalkControlFactory {
 
                 return plotAnswer;
             } catch (Exception e) {
-                bubbleFactory.createBubble("Error").appendText("Error processing Kafka talk: " + e.getMessage());
-                throw new RuntimeException("Error processing Kafka talk", e);
+
+                bubbleFactory.createBubble("Error").appendText("Error processing talk: " + e.getMessage());
+                throw new RuntimeException("Error processing talk", e);
             }
         }
 
